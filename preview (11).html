@@ -1,0 +1,2020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="RepMatrix">
+    <meta name="theme-color" content="#121212">
+    <title>REP MATRIX</title>
+    
+    <link rel="icon" type="image/svg+xml" href="icon-light.svg" media="(prefers-color-scheme: light)">
+    <link rel="icon" type="image/svg+xml" href="icon-dark.svg" media="(prefers-color-scheme: dark)">
+    <link rel="apple-touch-icon" href="icon-dark.png">
+    
+    <link rel="manifest" href="data:application/manifest+json,{
+        &quot;name&quot;:&quot;REP MATRIX&quot;,
+        &quot;short_name&quot;:&quot;RepMatrix&quot;,
+        &quot;start_url&quot;:&quot;.&quot;,
+        &quot;display&quot;:&quot;standalone&quot;,
+        &quot;background_color&quot;:&quot;#121212&quot;,
+        &quot;theme_color&quot;:&quot;#121212&quot;,
+        &quot;icons&quot;:[{
+            &quot;src&quot;:&quot;icon-dark.png&quot;,
+            &quot;sizes&quot;:&quot;192x192&quot;,
+            &quot;type&quot;:&quot;image/png&quot;
+        },{
+            &quot;src&quot;:&quot;icon-dark.png&quot;,
+            &quot;sizes&quot;:&quot;512x512&quot;,
+            &quot;type&quot;:&quot;image/png&quot;
+        }]
+    }">
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { 
+            background-color: #121212; 
+            color: #ffffff; 
+            padding: clamp(8px, 2dvh, 15px);
+            padding-top: max(clamp(8px, 2dvh, 15px), env(safe-area-inset-top));
+            padding-bottom: max(clamp(8px, 2dvh, 15px), env(safe-area-inset-bottom));
+            display: flex; 
+            flex-direction: column; 
+            height: 100dvh;
+            overflow: hidden; 
+            -webkit-user-select: none; 
+            user-select: none; 
+            gap: clamp(6px, 1.2dvh, 12px);
+        }
+        
+        /* ── HEADER ── */
+        .header { 
+            flex-shrink: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: clamp(3px, 0.6dvh, 6px);
+        }
+        .header h1 { 
+            font-size: clamp(16px, 3dvh, 24px); 
+            font-weight: 900; 
+            letter-spacing: 2px; 
+            color: #ffffff; 
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5); 
+        }
+        
+        .date-nav { display: flex; align-items: center; gap: 6px; }
+        .date-badge { 
+            background: #1a1a1a; 
+            padding: clamp(4px, 0.8dvh, 8px) 16px;
+            border-radius: 20px; 
+            font-size: clamp(11px, 1.6dvh, 13px);
+            color: #4cd964; 
+            border: 1px solid #262626; 
+            font-weight: 800; 
+            cursor: pointer; 
+            letter-spacing: 0.5px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2); 
+            height: clamp(28px, 4dvh, 36px);
+            display: flex;
+            align-items: center;
+        }
+        .nav-arrow { 
+            background: #1a1a1a; 
+            border: 1px solid #262626; 
+            color: #4cd964; 
+            font-size: clamp(16px, 2.4dvh, 20px);
+            font-weight: 900; 
+            cursor: pointer; 
+            padding: 0 10px; 
+            border-radius: 20px; 
+            height: clamp(28px, 4dvh, 36px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            transition: all 0.2s;
+        }
+        .nav-arrow:active { background: #262626; transform: scale(0.95); }
+        .date-badge-wrapper { position: relative; display: inline-block; min-width: 160px; text-align: center; }
+        .hidden-date-picker { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+
+        /* ── MAIN SCROLL AREA ── */
+        .main-content { 
+            flex: 1;
+            display: flex; 
+            flex-direction: column; 
+            gap: clamp(6px, 1dvh, 12px);
+            min-height: 0;
+            position: relative;
+        }
+        
+        .card { background: #1a1a1a; border-radius: 12px; padding: clamp(10px, 1.8dvh, 15px); border: 1px solid #262626; position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+        .card-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: clamp(6px, 1dvh, 10px); }
+        .card-title { 
+            font-size: clamp(13px, 2dvh, 16px); 
+            font-weight: 900; 
+            text-transform: uppercase; 
+            letter-spacing: 2px;
+            background: linear-gradient(90deg, #4cd964, #00d2ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 6px rgba(76,217,100,0.5));
+        }
+        
+        .status-container { display: flex; align-items: center; gap: 6px; background: #222; padding: 3px 8px; border-radius: 12px; border: 1px solid #333; }
+        .loading-status { font-size: 10px; color: #007aff; font-weight: bold; }
+        .refresh-btn { background: none; border: none; color: #aaa; cursor: pointer; font-size: 10px; }
+
+        .chart-container { 
+            display: flex; 
+            justify-content: space-around; 
+            align-items: flex-start;
+            flex: 1;
+            padding-top: 5px; 
+            position: relative;
+            min-height: 0;
+        }
+        .bar-wrapper { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            width: 32%; 
+            height: 100%;
+            position: relative; 
+            cursor: pointer;
+        }
+        .bar-wrapper-inner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            width: 100%;
+            justify-content: flex-end;
+            min-height: 0;
+        }
+        /* Fixed reserved height — always the same whether badges exist or not */
+        .bar-below {
+            flex-shrink: 0;
+            height: 46px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 5px;
+            gap: 3px;
+            width: 100%;
+        }
+        
+        .streak-badge { font-size: clamp(9px, 1.4dvh, 11px); font-weight: 800; color: #ff9500; margin-bottom: clamp(3px, 0.6dvh, 6px); background: rgba(255,149,0,0.1); padding: 2px 6px; border-radius: 8px; border: 1px solid rgba(255,149,0,0.2); }
+        
+        .bar-outer { 
+            background: #2d2d2d; 
+            width: clamp(36px, 9vw, 56px);
+            flex: 1;
+            min-height: clamp(80px, 14dvh, 140px);
+            border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; position: relative; border: 1px solid #3a3a3a; 
+        }
+        
+        .bar-layer { width: 100%; height: 0%; transition: height 0.6s cubic-bezier(0.1, 1, 0.1, 1), clip-path 0.6s cubic-bezier(0.1, 1, 0.1, 1); position: absolute; bottom: 0; left: 0; border-radius: 0 0 5px 5px; }
+        .layer-base { background: #4cd964; z-index: 1; }
+        .layer-backfill { background: linear-gradient(180deg, #007aff, #00d2ff); z-index: 2; box-shadow: 0 0 8px rgba(0,122,255,0.6); }
+        .layer-flame { background: linear-gradient(0deg, #ff4500, #ff9500, #ffcc00); z-index: 3; animation: flamePulse 1.5s ease-in-out infinite alternate; box-shadow: 0 -2px 10px rgba(255,149,0,0.5); }
+
+        @keyframes flamePulse {
+            0% { filter: brightness(0.9) contrast(1); opacity: 0.92; }
+            100% { filter: brightness(1.2) contrast(1.1); opacity: 1; }
+        }
+
+        .bar-label { font-size: clamp(11px, 1.6dvh, 13px); color: #eee; font-weight: 700; text-align: center; }
+        .bar-count { font-size: 11px; margin-bottom: 2px; position: absolute; width: 100%; text-align: center; bottom: 4px; font-weight: 900; color: #000; z-index: 10; }
+
+        .playground-legend { display: flex; justify-content: center; gap: 16px; font-size: 10px; font-weight: 700; margin: clamp(2px, 0.4dvh, 4px) 0 clamp(4px, 0.8dvh, 8px) 0; }
+        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+        /* ── ACCORDIONS — overlay downward, don't push layout ── */
+        .accordion { 
+            background: #1a1a1a; 
+            border-radius: 12px; 
+            border: 1px solid #262626; 
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+        }
+        .accordion.open { z-index: 100; }
+        .accordion-header { 
+            padding: clamp(10px, 1.6dvh, 15px); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            font-weight: 700; 
+            font-size: clamp(12px, 1.8dvh, 14px); 
+            color: #ddd; 
+            cursor: pointer;
+            border-radius: 12px;
+            position: relative;
+            z-index: 2;
+            background: #1a1a1a;
+        }
+        .accordion-header::after { content: '▼'; font-size: 9px; color: #666; transition: transform 0.2s; }
+        .accordion.open .accordion-header::after { transform: rotate(180deg); }
+        .accordion-content { 
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0; right: 0;
+            background: #1a1a1a;
+            border: 1px solid #262626;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            padding: 0 15px 15px 15px; 
+            max-height: 280px;
+            overflow-y: auto; 
+            font-size: 13px; 
+            color: #aaa;
+            z-index: 99;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+        }
+        .accordion.open .accordion-content { display: block; }
+
+        .log-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #262626; font-size: 13px; }
+
+        .trend-row { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; }
+        .trend-meta { display: flex; justify-content: space-between; font-size: 13px; color: #eee; font-weight: 600; }
+        .trend-bar-outer { background: #2d2d2d; height: 6px; width: 100%; border-radius: 3px; overflow: hidden; border: 1px solid #3a3a3a; }
+        .trend-bar-inner { background: #4cd964; height: 100%; width: 0%; border-radius: 3px; transition: width 0.5s ease-out; }
+
+        /* ── INPUT PANEL ── */
+        .input-panel { 
+            background: #1a1a1a; 
+            border-radius: 12px; 
+            padding: clamp(8px, 1.4dvh, 15px);
+            border: 1px solid #262626; 
+            display: flex; 
+            flex-direction: column; 
+            gap: clamp(6px, 1dvh, 12px);
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.5); 
+            flex-shrink: 0; 
+        }
+        .input-header { display: flex; justify-content: space-between; align-items: center; }
+        .input-title { font-size: clamp(11px, 1.6dvh, 14px); font-weight: 800; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+        .user-select { background: #2d2d2d; color: white; border: 1px solid #333; padding: clamp(3px, 0.6dvh, 5px) 10px; border-radius: 6px; font-weight: 700; font-size: clamp(11px, 1.6dvh, 13px); color-scheme: dark; }
+        
+        .counter-grid { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: clamp(6px, 1dvh, 10px); align-items: stretch; }
+        .counter-display { text-align: center; display: flex; flex-direction: column; justify-content: center; }
+        .counter-number { font-size: clamp(28px, 5dvh, 42px); font-weight: 800; line-height: 1; color: #fff; }
+        .counter-unit { font-size: 10px; color: #666; font-weight: 700; letter-spacing: 1px; margin-top: 2px; }
+        
+        .btn-col { display: flex; flex-direction: column; gap: clamp(5px, 0.8dvh, 8px); justify-content: space-between; }
+        .btn { 
+            background: #2d2d2d; color: white; border: 1px solid #3f3f3f; border-radius: 8px; 
+            padding: clamp(7px, 1.2dvh, 12px) clamp(6px, 1dvh, 12px);
+            font-weight: 700; font-size: clamp(13px, 2dvh, 15px); 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; flex: 1;
+            min-height: 44px;
+        }
+        .btn:active { background: #3d3d3d; }
+        .btn span { font-size: 9px; color: #777; font-weight: 600; margin-top: 1px; }
+        .btn-neg { background: #262626; border-color: #333; }
+        
+        .manual-input-box { background: #121212; border: 1px solid #333; border-radius: 6px; padding: clamp(4px, 0.6dvh, 6px); width: 100%; text-align: center; color: white; font-size: clamp(12px, 1.8dvh, 14px); margin-top: 4px; }
+        .submit-btn { 
+            background: #ffffff; color: #000000; border: none; border-radius: 8px; 
+            padding: clamp(9px, 1.6dvh, 14px);
+            font-weight: 900; font-size: clamp(13px, 2dvh, 16px); letter-spacing: 1.5px; text-transform: uppercase; text-align: center; width: 100%; cursor: pointer; box-shadow: 0 4px 12px rgba(255,255,255,0.1); 
+        }
+        .submit-btn:disabled { background: #444; color: #888; box-shadow: none; }
+
+        /* ── ANIMATION OVERLAY ── */
+        #anim-overlay {
+            position: fixed; inset: 0; z-index: 999;
+            pointer-events: none; overflow: hidden;
+        }
+
+        /* CONFETTI */
+        .confetti-piece {
+            position: absolute;
+            width: 10px; height: 10px;
+            top: -20px;
+            opacity: 0;
+            animation: confettiFall linear forwards;
+        }
+        @keyframes confettiFall {
+            0%   { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+            80%  { opacity: 1; }
+            100% { opacity: 0; transform: translateY(110vh) rotate(720deg) scale(0.5); }
+        }
+
+        /* FLAME BURST */
+        .flame-particle {
+            position: absolute;
+            border-radius: 50% 50% 20% 20%;
+            opacity: 0;
+            animation: flameBurst ease-out forwards;
+        }
+        @keyframes flameBurst {
+            0%   { opacity: 1; transform: translate(var(--fx), var(--fy)) scale(0.3); }
+            40%  { opacity: 1; transform: translate(var(--tx), var(--ty)) scale(1.2); }
+            100% { opacity: 0; transform: translate(var(--tx2), var(--ty2)) scale(0); }
+        }
+
+        /* FIREWORKS */
+        .firework-shell {
+            position: absolute;
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            opacity: 0;
+            animation: shellRise ease-out forwards;
+        }
+        @keyframes shellRise {
+            0%   { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(var(--rise)) scale(0.2); }
+        }
+        .firework-spark {
+            position: absolute;
+            width: 4px; height: 4px;
+            border-radius: 50%;
+            opacity: 0;
+            animation: sparkFly ease-out forwards;
+        }
+        @keyframes sparkFly {
+            0%   { opacity: 1; transform: translate(0,0) scale(1); }
+            100% { opacity: 0; transform: translate(var(--sx), var(--sy)) scale(0); }
+        }
+
+        /* LASER SHOW */
+        .laser-beam {
+            position: absolute;
+            height: 2px;
+            opacity: 0;
+            transform-origin: left center;
+            animation: laserSweep ease-in-out forwards;
+            border-radius: 2px;
+        }
+        @keyframes laserSweep {
+            0%   { opacity: 0; transform: scaleX(0) rotate(var(--angle)); }
+            20%  { opacity: 1; transform: scaleX(1) rotate(var(--angle)); }
+            70%  { opacity: 1; transform: scaleX(1) rotate(calc(var(--angle) + var(--sweep))); }
+            100% { opacity: 0; transform: scaleX(0.8) rotate(calc(var(--angle) + var(--sweep))); }
+        }
+        .laser-core {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0;
+            animation: laserCore ease-in-out forwards;
+        }
+        @keyframes laserCore {
+            0%,100% { opacity: 0; transform: scale(0); }
+            30%,70% { opacity: 1; transform: scale(1); }
+        }
+
+        /* FLASH */
+        .screen-flash {
+            position: fixed; inset: 0; z-index: 998;
+            pointer-events: none;
+            opacity: 0;
+            animation: screenFlash ease-out forwards;
+        }
+        @keyframes screenFlash {
+            0%  { opacity: 0.7; }
+            100%{ opacity: 0; }
+        }
+        /* ── BADGE STRIP (under bar names) ── */
+        .bar-badges {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            gap: 1px;
+            min-height: 18px;
+            cursor: pointer;
+        }
+        .bar-badge-icon {
+            font-size: 13px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .bar-badge-more {
+            font-size: 8px;
+            color: #555;
+            font-weight: 900;
+            align-self: center;
+            margin-left: 1px;
+        }
+        .bar-king {
+            font-size: 10px;
+            color: #ffcc00;
+            vertical-align: middle;
+            line-height: 1;
+            position: relative;
+            top: -1px;
+        }
+
+        /* ── BADGE MODAL ── */
+        .badge-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 500;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            animation: backdropIn 0.2s ease-out forwards;
+        }
+        @keyframes backdropIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+        .badge-modal {
+            background: #1a1a1a;
+            border: 1px solid #2d2d2d;
+            border-radius: 20px 20px 0 0;
+            padding: 16px 20px 32px 20px;
+            width: 100%;
+            max-width: 480px;
+            animation: modalUp 0.25s cubic-bezier(0.2, 1, 0.3, 1) forwards;
+        }
+        @keyframes modalUp {
+            from { transform: translateY(100%); }
+            to   { transform: translateY(0); }
+        }
+        .badge-modal-handle {
+            width: 36px; height: 4px;
+            background: #333;
+            border-radius: 2px;
+            margin: 0 auto 14px auto;
+        }
+        .badge-modal-title {
+            font-size: 13px;
+            font-weight: 900;
+            color: #4cd964;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+            text-align: center;
+        }
+        .badge-modal-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 4px;
+        }
+        .badge-modal-row {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 10px;
+            padding: 2px 0;
+        }
+        .badge-modal-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            flex-shrink: 0;
+            min-width: 44px;
+        }
+        .badge-modal-icon { font-size: 26px; line-height: 1; }
+        .badge-modal-label { font-size: 8px; color: #aaa; font-weight: 700; text-align: center; white-space: nowrap; }
+        .badge-modal-date  { font-size: 7px; color: #444; font-weight: 600; }
+        .badge-modal-empty { color: #444; font-size: 12px; text-align: center; padding: 10px 0; width: 100%; }
+
+        /* ── BADGE TOAST ── */
+        .badge-toast {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            animation: toastFade 3s ease-in-out forwards;
+        }
+        .badge-toast-inner {
+            background: #1a1a1a;
+            border: 2px solid #4cd964;
+            border-radius: 20px;
+            padding: 20px 30px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(76,217,100,0.3), 0 8px 32px rgba(0,0,0,0.8);
+            transform: scale(1);
+        }
+        .badge-toast-icon { font-size: 48px; line-height: 1; margin-bottom: 6px; }
+        .badge-toast-name { font-size: 13px; color: #4cd964; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; }
+        .badge-toast-label { font-size: 18px; color: #fff; font-weight: 900; margin-top: 4px; letter-spacing: 0.5px; }
+        @keyframes toastFade {
+            0%   { opacity: 0; transform: scale(0.8); }
+            15%  { opacity: 1; transform: scale(1.05); }
+            25%  { transform: scale(1); }
+            70%  { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* ── BAR TAP HIGHLIGHT ── */
+        .bar-wrapper:active .bar-outer { border-color: #4cd964; box-shadow: 0 0 12px rgba(76,217,100,0.4); }
+        .bar-wrapper.selected-user .bar-label {
+            color: #4cd964;
+        }
+        .bar-wrapper.selected-user .bar-outer {
+            border-color: #4cd964;
+            box-shadow: 0 0 10px rgba(76,217,100,0.25);
+        }
+
+        /* ── SETTINGS COG ── */
+        .settings-cog {
+            position: absolute;
+            top: clamp(8px, 2dvh, 15px);
+            right: clamp(8px, 2dvh, 15px);
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: opacity 0.2s, transform 0.3s;
+            line-height: 1;
+            padding: 4px;
+        }
+        .settings-cog:active { opacity: 1; transform: rotate(45deg); }
+
+        /* ── SETTINGS OVERLAY ── */
+        .settings-overlay {
+            position: fixed;
+            inset: 0;
+            background: #0e0e0e;
+            z-index: 900;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.2, 1, 0.3, 1);
+        }
+        .settings-overlay.open {
+            transform: translateY(0);
+        }
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 20px 12px 20px;
+            border-bottom: 1px solid #222;
+            flex-shrink: 0;
+        }
+        .settings-title {
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            color: #fff;
+        }
+        .settings-close {
+            background: #2d2d2d;
+            border: 1px solid #3f3f3f;
+            color: #aaa;
+            font-size: 16px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .settings-close:active { background: #3d3d3d; }
+        .settings-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .settings-section {
+            background: #1a1a1a;
+            border: 1px solid #262626;
+            border-radius: 12px;
+            padding: 14px 16px;
+        }
+        .settings-section-title {
+            font-size: 11px;
+            font-weight: 800;
+            color: #4cd964;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .settings-row:last-child { margin-bottom: 0; }
+        .settings-label {
+            font-size: 13px;
+            color: #aaa;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .settings-input {
+            background: #2d2d2d;
+            border: 1px solid #3f3f3f;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 8px 12px;
+            text-align: right;
+            width: 120px;
+            color-scheme: dark;
+        }
+        .settings-input:focus {
+            outline: none;
+            border-color: #4cd964;
+        }
+        .settings-select {
+            background: #2d2d2d;
+            border: 1px solid #3f3f3f;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 8px 12px;
+            color-scheme: dark;
+        }
+        /* Player rows */
+        .player-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #222;
+        }
+        .player-row:last-child { border-bottom: none; }
+        .player-name {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 700;
+            color: #eee;
+        }
+        .player-active-toggle {
+            font-size: 11px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .player-active-toggle.active {
+            background: rgba(76,217,100,0.15);
+            border-color: #4cd964;
+            color: #4cd964;
+        }
+        .player-active-toggle.inactive {
+            background: #222;
+            color: #555;
+        }
+        .player-remove {
+            background: none;
+            border: none;
+            color: #ff3b3b44;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 6px;
+            transition: color 0.15s;
+        }
+        .player-remove:active { color: #ff3b3b; }
+        .settings-add-btn {
+            background: #2d2d2d;
+            border: 1px solid #3f3f3f;
+            color: #4cd964;
+            font-size: 13px;
+            font-weight: 800;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .settings-add-btn:active { background: #3d3d3d; }
+        .settings-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 6px;
+        }
+        .settings-save-btn {
+            flex: 1;
+            background: #ffffff;
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            cursor: pointer;
+        }
+        .settings-save-btn:active { background: #ddd; }
+        .settings-reset-btn {
+            background: #1a1a1a;
+            color: #ff3b3b;
+            border: 1px solid #ff3b3b44;
+            border-radius: 10px;
+            padding: 14px 18px;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .settings-reset-btn:active { background: #2a1a1a; }
+        .settings-status {
+            text-align: center;
+            font-size: 12px;
+            color: #4cd964;
+            font-weight: 700;
+            min-height: 20px;
+            padding: 4px 0;
+        }
+            background: #ff3b3b;
+            color: #fff;
+            font-size: 9px;
+            font-weight: 900;
+            padding: 2px 6px;
+            border-radius: 8px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="anim-overlay"></div>
+
+    <div class="header">
+        <h1>REP MATRIX</h1>
+        <div class="date-nav">
+            <button class="nav-arrow" onclick="prevDay()">‹‹</button>
+            <div class="date-badge-wrapper">
+                <div class="date-badge" id="today-date">Today</div>
+                <input type="date" id="main-view-date-picker" class="hidden-date-picker" onchange="changeViewDate(this.value)">
+            </div>
+            <button class="nav-arrow" onclick="nextDay()">››</button>
+        </div>
+        <button class="settings-cog" onclick="openSettings()" title="Settings">⚙️</button>
+    </div>
+
+    <div class="main-content">
+        <div class="card">
+            <div class="card-header-row">
+                <div class="card-title">GAINS</div>
+                <div class="status-container">
+                    <div class="loading-status" id="load-status">Syncing...</div>
+                    <span class="offline-badge" id="offline-badge">QUEUED</span>
+                    <button class="refresh-btn" onclick="fetchDataFromSheet()" title="Force Refresh">🔄</button>
+                </div>
+            </div>
+            
+            <div class="playground-legend">
+                <div class="legend-item"><div class="dot" style="background:#4cd964;"></div> Normal</div>
+                <div class="legend-item"><div class="dot" style="background:#007aff;"></div> Backfilled</div>
+                <div class="legend-item"><div class="dot" style="background:#ff9500;"></div> Fire</div>
+            </div>
+            
+            <div class="chart-container" id="chart-container">
+                <!-- bars rendered dynamically by renderBars() -->
+            </div>
+        </div>
+
+        <div class="accordion" id="history-accordion">
+            <div class="accordion-header" id="log-accordion-header" onclick="toggleAccordion('history-accordion')">Detailed Daily Log</div>
+            <div class="accordion-content" id="log-content">
+                <div style="text-align:center; color:#555; padding: 10px;">Loading history...</div>
+            </div>
+        </div>
+
+        <div class="accordion" id="trends-accordion">
+            <div class="accordion-header" onclick="toggleAccordion('trends-accordion')">Monthly Trends</div>
+            <div class="accordion-content" id="trends-content">
+                <div style="text-align:center; padding:10px; color:#555;">Processing data...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="input-panel">
+        <div class="input-header">
+            <div class="input-title">Log Pushups</div>
+            <select class="user-select" id="user-select">
+                <!-- populated dynamically -->
+            </select>
+        </div>
+
+        <div class="counter-grid">
+            <div class="btn-col">
+                <div class="btn btn-neg" onclick="adjustCounter(-5)">-5<span>REPS</span></div>
+                <div class="btn btn-neg" onclick="adjustCounter(-10)">-10<span>REPS</span></div>
+            </div>
+            
+            <div class="counter-display">
+                <div class="counter-number" id="counter-val">0</div>
+                <div class="counter-unit">REPS</div>
+                <input type="number" id="manual-input" class="manual-input-box" placeholder="Or type exact..." oninput="syncManualInput(this.value)">
+            </div>
+            
+            <div class="btn-col">
+                <div class="btn" onclick="adjustCounter(1)">+1<span>REPS</span></div>
+                <div class="btn" onclick="adjustCounter(5)">+5<span>REPS</span></div>
+                <div class="btn" onclick="adjustCounter(10)">+10<span>REPS</span></div>
+            </div>
+        </div>
+
+        <button class="submit-btn" id="submit-btn" onclick="submitLog()">PUSH!</button>
+    </div>
+
+    <!-- ── SETTINGS OVERLAY ── -->
+    <div class="settings-overlay" id="settings-overlay">
+        <div class="settings-header">
+            <div class="settings-title">⚙️ Settings</div>
+            <button class="settings-close" onclick="closeSettings()">✕</button>
+        </div>
+        <div class="settings-body">
+
+            <div class="settings-section">
+                <div class="settings-section-title">Daily Goal</div>
+                <div class="settings-row">
+                    <label class="settings-label">Reps per day</label>
+                    <input type="number" class="settings-input" id="cfg-goal" min="1" max="9999">
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-section-title">Monthly Benchmark</div>
+                <div class="settings-row">
+                    <label class="settings-label">Target reps / month</label>
+                    <input type="number" class="settings-input" id="cfg-benchmark" min="1" max="99999">
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-section-title">Date Range</div>
+                <div class="settings-row">
+                    <label class="settings-label">Mode</label>
+                    <select class="settings-select" id="cfg-range-mode" onchange="toggleRangeInputs()">
+                        <option value="month">Calendar Month</option>
+                        <option value="range">Custom Range</option>
+                    </select>
+                </div>
+                <div id="cfg-range-fields" style="display:none;">
+                    <div class="settings-row">
+                        <label class="settings-label">Start</label>
+                        <input type="date" class="settings-input" id="cfg-range-start">
+                    </div>
+                    <div class="settings-row">
+                        <label class="settings-label">End</label>
+                        <input type="date" class="settings-input" id="cfg-range-end">
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-section-title">Players <span style="color:#555;font-size:10px;font-weight:600">(max 4 active)</span></div>
+                <div id="cfg-players-list"></div>
+                <div class="settings-row" style="margin-top:10px;">
+                    <input type="text" class="settings-input" id="cfg-new-player" placeholder="Add player name..." style="flex:1;">
+                    <button class="settings-add-btn" onclick="addPlayer()">+ Add</button>
+                </div>
+            </div>
+
+            <div class="settings-actions">
+                <button class="settings-save-btn" onclick="saveSettings()">Save & Sync</button>
+                <button class="settings-reset-btn" onclick="resetSettings()">Reset Defaults</button>
+            </div>
+
+            <div class="settings-status" id="settings-status"></div>
+        </div>
+    </div>
+
+    <script>
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw496e-g6KOLRM09nwOPJzQqctrrtp_MIi0bExPKusnIgfSmW7NT7l4cGxsBjFwk9t-/exec";
+
+        // ── APP DEFAULTS ──
+        const DEFAULTS = {
+            goal:        100,
+            benchmark:   3000,
+            players:     ['Anthony','Nick','Chris'],
+            active:      ['Anthony','Nick','Chris'],
+            range_mode:  'month',
+            range_start: '',
+            range_end:   ''
+        };
+
+        // ── LIVE CONFIG (starts as defaults, overridden by sheet) ──
+        let config = JSON.parse(localStorage.getItem('rm_config') || 'null') || Object.assign({}, DEFAULTS);
+        // Ensure numeric types
+        config.goal      = parseInt(config.goal) || DEFAULTS.goal;
+        config.benchmark = parseInt(config.benchmark) || DEFAULTS.benchmark;
+        // Ensure arrays
+        if (typeof config.players === 'string') config.players = config.players.split(',').map(s => s.trim()).filter(Boolean);
+        if (typeof config.active  === 'string') config.active  = config.active.split(',').map(s => s.trim()).filter(Boolean);
+
+        let GOAL             = config.goal;
+        let MONTHLY_BENCHMARK = config.benchmark;
+        let ACTIVE_PLAYERS   = config.active.slice(0, 4);
+
+        function applyConfig(cfg) {
+            config.goal        = parseInt(cfg.goal)      || DEFAULTS.goal;
+            config.benchmark   = parseInt(cfg.benchmark) || DEFAULTS.benchmark;
+            config.range_mode  = cfg.range_mode  || 'month';
+            config.range_start = cfg.range_start || '';
+            config.range_end   = cfg.range_end   || '';
+            if (typeof cfg.players === 'string') config.players = cfg.players.split(',').map(s => s.trim()).filter(Boolean);
+            else if (Array.isArray(cfg.players))  config.players = cfg.players;
+            if (typeof cfg.active  === 'string') config.active  = cfg.active.split(',').map(s => s.trim()).filter(Boolean);
+            else if (Array.isArray(cfg.active))   config.active  = cfg.active;
+
+            GOAL              = config.goal;
+            MONTHLY_BENCHMARK = config.benchmark;
+            ACTIVE_PLAYERS    = config.active.slice(0, 4);
+
+            localStorage.setItem('rm_config', JSON.stringify(config));
+
+            // Only touch DOM if it's ready
+            if (document.getElementById('chart-container')) {
+                renderBars();
+                populateUserSelect();
+            }
+        }
+
+        // ── APP STATE ──
+        let currentCounter = 0;
+        let masterSheetData = [];
+        let selectedViewISOStr = new Date().toLocaleDateString('en-CA');
+        let lastMonthlyTotals = {};
+
+        // ── OFFLINE QUEUE ──
+        let submitQueue = JSON.parse(localStorage.getItem('rm_queue') || '[]');
+
+        // ── RENDER BARS DYNAMICALLY ──
+        function renderBars() {
+            const container = document.getElementById('chart-container');
+            container.innerHTML = ACTIVE_PLAYERS.map(user => `
+                <div class="bar-wrapper" id="wrap-${user}" data-user="${user}">
+                    <div class="streak-badge" id="streak-${user}">🔥 0</div>
+                    <div class="bar-wrapper-inner">
+                        <div class="bar-outer">
+                            <div class="bar-count" id="count-${user}">0</div>
+                            <div class="bar-layer layer-base" id="bar-base-${user}"></div>
+                            <div class="bar-layer layer-backfill" id="bar-backfill-${user}"></div>
+                            <div class="bar-layer layer-flame" id="bar-flame-${user}"></div>
+                        </div>
+                    </div>
+                    <div class="bar-below">
+                        <div class="bar-label" id="bar-label-${user}">${user}</div>
+                        <div class="bar-badges" id="bar-badges-${user}" data-badge-user="${user}"></div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Attach click handlers after DOM insertion
+            ACTIVE_PLAYERS.forEach(user => {
+                const wrapper = document.getElementById(`wrap-${user}`);
+                if (wrapper) wrapper.addEventListener('click', () => selectUser(user));
+                const badges = document.getElementById(`bar-badges-${user}`);
+                if (badges) badges.addEventListener('click', (e) => { e.stopPropagation(); openBadgeModal(user); });
+            });
+        }
+
+        // ── POPULATE USER SELECT ──
+        function populateUserSelect() {
+            const sel = document.getElementById('user-select');
+            const current = sel.value;
+            sel.innerHTML = ACTIVE_PLAYERS.map(p => `<option value="${p}">${p}</option>`).join('');
+            // Restore previous selection if still valid
+            if (ACTIVE_PLAYERS.includes(current)) sel.value = current;
+            // Re-apply saved user
+            const saved = localStorage.getItem('rm_last_user');
+            if (saved && ACTIVE_PLAYERS.includes(saved)) selectUser(saved);
+            else selectUser(ACTIVE_PLAYERS[0]);
+        }
+
+        // ── SETTINGS PANEL ──
+        function openSettings() {
+            // Populate fields from current config
+            document.getElementById('cfg-goal').value      = config.goal;
+            document.getElementById('cfg-benchmark').value = config.benchmark;
+            document.getElementById('cfg-range-mode').value = config.range_mode;
+            if (config.range_start) document.getElementById('cfg-range-start').value = config.range_start;
+            if (config.range_end)   document.getElementById('cfg-range-end').value   = config.range_end;
+            toggleRangeInputs();
+            renderPlayersList();
+            document.getElementById('settings-status').innerText = '';
+            document.getElementById('settings-overlay').classList.add('open');
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-overlay').classList.remove('open');
+        }
+
+        function toggleRangeInputs() {
+            const mode = document.getElementById('cfg-range-mode').value;
+            document.getElementById('cfg-range-fields').style.display = mode === 'range' ? 'block' : 'none';
+        }
+
+        function renderPlayersList() {
+            const list = document.getElementById('cfg-players-list');
+            const activeCount = config.active.length;
+            list.innerHTML = config.players.map(p => {
+                const isActive = config.active.includes(p);
+                const canActivate = isActive || activeCount < 4;
+                const disabledAttr = (!isActive && !canActivate) ? 'disabled' : '';
+                return `<div class="player-row">
+                    <span class="player-name">${p}</span>
+                    <button class="player-active-toggle ${isActive ? 'active' : 'inactive'}"
+                        data-toggle-player="${p}" ${disabledAttr}>
+                        ${isActive ? 'Active' : 'Inactive'}
+                    </button>
+                    <button class="player-remove" data-remove-player="${p}" title="Remove">✕</button>
+                </div>`;
+            }).join('');
+
+            // Attach handlers after render
+            list.querySelectorAll('[data-toggle-player]').forEach(btn => {
+                btn.addEventListener('click', () => togglePlayerActive(btn.dataset.togglePlayer));
+            });
+            list.querySelectorAll('[data-remove-player]').forEach(btn => {
+                btn.addEventListener('click', () => removePlayer(btn.dataset.removePlayer));
+            });
+        }
+
+        function togglePlayerActive(name) {
+            if (config.active.includes(name)) {
+                if (config.active.length <= 1) return; // keep at least 1
+                config.active = config.active.filter(p => p !== name);
+            } else {
+                if (config.active.length >= 4) return;
+                config.active.push(name);
+            }
+            renderPlayersList();
+        }
+
+        function addPlayer() {
+            const input = document.getElementById('cfg-new-player');
+            const name = input.value.trim();
+            if (!name) return;
+            if (config.players.includes(name)) {
+                document.getElementById('settings-status').innerText = `${name} already exists`;
+                return;
+            }
+            config.players.push(name);
+            // Auto-activate if under 4
+            if (config.active.length < 4) config.active.push(name);
+            input.value = '';
+            renderPlayersList();
+            document.getElementById('settings-status').innerText = '';
+        }
+
+        function removePlayer(name) {
+            config.players = config.players.filter(p => p !== name);
+            config.active  = config.active.filter(p => p !== name);
+            renderPlayersList();
+        }
+
+        function saveSettings() {
+            const newConfig = {
+                goal:        parseInt(document.getElementById('cfg-goal').value) || DEFAULTS.goal,
+                benchmark:   parseInt(document.getElementById('cfg-benchmark').value) || DEFAULTS.benchmark,
+                range_mode:  document.getElementById('cfg-range-mode').value,
+                range_start: document.getElementById('cfg-range-start').value,
+                range_end:   document.getElementById('cfg-range-end').value,
+                players:     config.players.join(','),
+                active:      config.active.join(',')
+            };
+
+            applyConfig(newConfig);
+            processAndRenderData();
+
+            const status = document.getElementById('settings-status');
+            status.innerText = 'Saving to sheet...';
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST', mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'config', config: newConfig })
+            }).then(() => {
+                status.innerText = '✓ Saved!';
+                setTimeout(closeSettings, 800);
+            }).catch(() => {
+                status.innerText = 'Saved locally (offline)';
+                setTimeout(closeSettings, 1000);
+            });
+        }
+
+        function resetSettings() {
+            if (!confirm('Reset all settings to defaults?')) return;
+            const status = document.getElementById('settings-status');
+            status.innerText = 'Resetting...';
+
+            applyConfig(Object.assign({}, DEFAULTS));
+            processAndRenderData();
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST', mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'config_reset' })
+            }).then(() => {
+                status.innerText = '✓ Reset to defaults!';
+                // Repopulate fields
+                document.getElementById('cfg-goal').value      = DEFAULTS.goal;
+                document.getElementById('cfg-benchmark').value = DEFAULTS.benchmark;
+                document.getElementById('cfg-range-mode').value = DEFAULTS.range_mode;
+                renderPlayersList();
+                setTimeout(closeSettings, 800);
+            }).catch(() => {
+                status.innerText = 'Reset locally (offline)';
+                setTimeout(closeSettings, 1000);
+            });
+        }
+
+        function saveQueue() {
+            localStorage.setItem('rm_queue', JSON.stringify(submitQueue));
+        }
+
+        function updateOfflineBadge() {
+            const badge = document.getElementById('offline-badge');
+            if (submitQueue.length > 0) {
+                badge.style.display = 'inline-block';
+                badge.innerText = `${submitQueue.length} QUEUED`;
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function flushQueue() {
+            if (submitQueue.length === 0) return;
+            const item = submitQueue[0];
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST', mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(item)
+            }).then(() => {
+                submitQueue.shift();
+                saveQueue();
+                updateOfflineBadge();
+                if (submitQueue.length > 0) flushQueue();
+                else fetchDataFromSheet();
+            }).catch(() => {});
+        }
+
+        // ── REMEMBER LAST USER ──
+        function selectUser(name) {
+            const sel = document.getElementById('user-select');
+            if (sel) sel.value = name;
+            localStorage.setItem('rm_last_user', name);
+            ACTIVE_PLAYERS.forEach(u => {
+                const el = document.getElementById(`wrap-${u}`);
+                if (el) el.classList.toggle('selected-user', u === name);
+            });
+        }
+
+        function loadSavedUser() {
+            const saved = localStorage.getItem('rm_last_user');
+            if (saved && ACTIVE_PLAYERS.includes(saved)) selectUser(saved);
+            else selectUser(ACTIVE_PLAYERS[0]);
+        }
+
+        // ── BADGE SYSTEM ──
+        const BADGE_DEFS = {
+            century:     { icon: '🏆', label: 'Century',      desc: 'Hit 100 reps in a day' },
+            double:      { icon: '⚡', label: 'Double Down',  desc: 'Hit 200 reps in a day' },
+            beast:       { icon: '💪', label: 'Beast Mode',   desc: '100 reps in one submit' },
+            speedDemon:  { icon: '⚡', label: 'Speed Demon',  desc: 'Hit 100 before noon' },
+            streak7:     { icon: '🔥', label: 'Week Warrior', desc: '7-day streak' },
+            streak14:    { icon: '📅', label: 'Fortnight',    desc: '14-day streak' },
+            streak21:    { icon: '💫', label: 'Three Weeks',  desc: '21-day streak' },
+            streak30:    { icon: '👑', label: 'Month Master', desc: '30-day streak' },
+            monthlyKing: { icon: '👑', label: 'Monthly King', desc: 'Most reps in a month' },
+        };
+
+        // Store badges as ordered arrays per user: [ {id, ts}, ... ]
+        // Migrate old format if needed
+        let rawBadgeStore = JSON.parse(localStorage.getItem('rm_badges_v2') || 'null');
+        if (!rawBadgeStore) {
+            rawBadgeStore = { Anthony: [], Nick: [], Chris: [] };
+            // Migrate from old format if present
+            const old = JSON.parse(localStorage.getItem('rm_badges') || 'null');
+            if (old) {
+                ['Anthony','Nick','Chris'].forEach(u => {
+                    if (old[u]) {
+                        Object.entries(old[u]).forEach(([id, count]) => {
+                            for (let i = 0; i < count; i++) {
+                                rawBadgeStore[u].push({ id, ts: Date.now() });
+                            }
+                        });
+                    }
+                });
+            }
+            localStorage.setItem('rm_badges_v2', JSON.stringify(rawBadgeStore));
+        }
+        let badgeStore = rawBadgeStore;
+
+        // Track last known monthly totals so awardBadge can pass them to renderBadgeStrips
+
+        function saveBadges() {
+            localStorage.setItem('rm_badges_v2', JSON.stringify(badgeStore));
+        }
+
+        function awardBadge(user, badgeId) {
+            if (!badgeStore[user]) badgeStore[user] = [];
+            badgeStore[user].push({ id: badgeId, ts: Date.now() });
+            saveBadges();
+            renderBadgeStrips(lastMonthlyTotals);
+            showBadgeToast(user, badgeId);
+        }
+
+        function renderBadgeStrips(monthlyTotals) {
+            // Determine live monthly king
+            let kingUser = null;
+            if (monthlyTotals) {
+                const max = Math.max(...Object.values(monthlyTotals));
+                if (max > 0) {
+                    const kings = Object.entries(monthlyTotals).filter(([,v]) => v === max);
+                    if (kings.length === 1) kingUser = kings[0][0];
+                }
+            }
+
+            ['Anthony','Nick','Chris'].forEach(user => {
+                const strip = document.getElementById(`bar-badges-${user}`);
+                const label = document.getElementById(`bar-label-${user}`);
+                const badges = badgeStore[user] || [];
+                const isKing = user === kingUser;
+
+                // Name label with optional king crown
+                label.innerHTML = isKing ? `${user} <span class="bar-king">👑</span>` : user;
+
+                if (badges.length === 0) {
+                    strip.innerHTML = '';
+                    strip.style.minHeight = '0';
+                    return;
+                }
+
+                strip.style.minHeight = '18px';
+                const preview = badges.slice(0, 4);
+                let html = preview.map((b, i) => {
+                    const def = BADGE_DEFS[b.id];
+                    if (!def) return '';
+                    const fade = i === 3 && badges.length > 4 ? 'opacity:0.3' : '';
+                    return `<span class="bar-badge-icon" style="${fade}">${def.icon}</span>`;
+                }).join('');
+
+                if (badges.length > 4) {
+                    html += `<span class="bar-badge-more">+${badges.length - 3}</span>`;
+                }
+                strip.innerHTML = html;
+            });
+        }
+
+        function openBadgeModal(user) {
+            const badges = badgeStore[user] || [];
+            const backdrop = document.createElement('div');
+            backdrop.className = 'badge-modal-backdrop';
+            backdrop.onclick = (e) => { if (e.target === backdrop) closeBadgeModal(backdrop); };
+
+            let content;
+            if (badges.length === 0) {
+                content = `<div class="badge-modal-empty">No badges yet — get to work! 💪</div>`;
+            } else {
+                content = badges.map(b => {
+                    const def = BADGE_DEFS[b.id];
+                    if (!def) return '';
+                    const date = new Date(b.ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    return `<div class="badge-modal-item">
+                        <span class="badge-modal-icon">${def.icon}</span>
+                        <span class="badge-modal-label">${def.label}</span>
+                        <span class="badge-modal-date">${date}</span>
+                    </div>`;
+                }).join('');
+            }
+
+            backdrop.innerHTML = `
+                <div class="badge-modal">
+                    <div class="badge-modal-handle"></div>
+                    <div class="badge-modal-title">${user}'s Badges</div>
+                    <div class="badge-modal-scroll">
+                        <div class="badge-modal-row">${content}</div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(backdrop);
+        }
+
+        function closeBadgeModal(backdrop) {
+            backdrop.style.animation = 'backdropIn 0.15s ease-out reverse forwards';
+            setTimeout(() => backdrop.remove(), 150);
+        }
+
+        // Keep old name as alias so processAndRenderData call still works
+        function renderHallOfFame(monthlyTotals) {
+            renderBadgeStrips(monthlyTotals || {});
+        }
+
+        function showBadgeToast(user, badgeId) {
+            const def = BADGE_DEFS[badgeId];
+            if (!def) return;
+            const toast = document.createElement('div');
+            toast.className = 'badge-toast';
+            toast.innerHTML = `
+                <div class="badge-toast-inner">
+                    <div class="badge-toast-icon">${def.icon}</div>
+                    <div class="badge-toast-name">${user}</div>
+                    <div class="badge-toast-label">${def.label}</div>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3100);
+        }
+
+        // Check monthly king at month end
+        function checkMonthlyKing(monthlyTotals) {
+            const now = new Date();
+            const lastCheckedKey = 'rm_king_checked';
+            const lastChecked = localStorage.getItem(lastCheckedKey);
+            const thisMonth = `${now.getFullYear()}-${now.getMonth()}`;
+
+            // Only award on the first day of a new month for the previous month
+            if (now.getDate() === 1 && lastChecked !== thisMonth) {
+                localStorage.setItem(lastCheckedKey, thisMonth);
+                const max = Math.max(...Object.values(monthlyTotals));
+                if (max > 0) {
+                    const kings = Object.entries(monthlyTotals).filter(([,v]) => v === max);
+                    if (kings.length === 1) {
+                        awardBadge(kings[0][0], 'monthlyKing');
+                    }
+                }
+            }
+        }
+
+        function adjustCounter(amount) {
+            currentCounter += amount;
+            updateCounterDisplay();
+        }
+
+        function syncManualInput(val) {
+            currentCounter = val === "" ? 0 : (parseInt(val) || 0);
+            updateCounterDisplay();
+        }
+
+        function updateCounterDisplay() {
+            document.getElementById('counter-val').innerText = currentCounter;
+            document.getElementById('manual-input').value = currentCounter === 0 ? "" : currentCounter;
+        }
+
+        function toggleAccordion(id) {
+            document.getElementById(id).classList.toggle('open');
+        }
+
+        function updateDateDisplayLabels(dateObj) {
+            const formatted = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const isToday = dateObj.toDateString() === new Date().toDateString();
+            document.getElementById('today-date').innerText = isToday ? `Today (${formatted}) 📅` : `${formatted} 📅`;
+            document.getElementById('log-accordion-header').innerText = isToday ? "Detailed Daily Log" : `Logs for ${formatted}`;
+        }
+
+        function changeViewDate(dateValue) {
+            if (!dateValue) return;
+            selectedViewISOStr = dateValue;
+            const targetDate = new Date(dateValue + "T12:00:00");
+            updateDateDisplayLabels(targetDate);
+            processAndRenderData();
+        }
+
+        function prevDay() {
+            const current = new Date(selectedViewISOStr);
+            current.setDate(current.getDate() - 1);
+            selectedViewISOStr = current.toLocaleDateString('en-CA');
+            document.getElementById('main-view-date-picker').value = selectedViewISOStr;
+            updateDateDisplayLabels(current);
+            processAndRenderData();
+        }
+
+        function nextDay() {
+            const current = new Date(selectedViewISOStr);
+            current.setDate(current.getDate() + 1);
+            selectedViewISOStr = current.toLocaleDateString('en-CA');
+            document.getElementById('main-view-date-picker').value = selectedViewISOStr;
+            updateDateDisplayLabels(current);
+            processAndRenderData();
+        }
+
+        function calculateStreaks() {
+            const userStreaks = {};
+            const userHistoricalMap = {};
+            ACTIVE_PLAYERS.forEach(u => { userStreaks[u] = 0; userHistoricalMap[u] = {}; });
+
+            masterSheetData.forEach(item => {
+                if (!item.timestamp || !userHistoricalMap[item.name]) return;
+                const dateKey = new Date(item.timestamp).toDateString();
+                userHistoricalMap[item.name][dateKey] = (userHistoricalMap[item.name][dateKey] || 0) + item.reps;
+            });
+
+            const today = new Date();
+            const todayStr = today.toDateString();
+
+            ACTIVE_PLAYERS.forEach(user => {
+                const logs = userHistoricalMap[user] || {};
+                let streakCount = 0;
+                let cursor = new Date(today);
+                while (true) {
+                    const cursorStr = cursor.toDateString();
+                    const dayVolume = Math.max(logs[cursorStr] || 0, 0);
+                    if (dayVolume >= GOAL) {
+                        streakCount++;
+                    } else if (cursorStr !== todayStr) {
+                        break;
+                    }
+                    cursor.setDate(cursor.getDate() - 1);
+                    if (cursor.getFullYear() < 2025) break;
+                }
+                userStreaks[user] = streakCount;
+            });
+
+            ACTIVE_PLAYERS.forEach(user => {
+                const el = document.getElementById(`streak-${user}`);
+                if (el) el.innerText = `🔥 ${userStreaks[user]}`;
+            });
+        }
+
+        function processAndRenderData() {
+            calculateStreaks();
+
+            const userDateMap = {};
+            let monthlyTotals = {};
+            ACTIVE_PLAYERS.forEach(u => { userDateMap[u] = {}; monthlyTotals[u] = 0; });
+            let rawChronologicalLogs = [];
+
+            const currentViewObj = new Date(selectedViewISOStr + "T12:00:00");
+            const isViewingToday = currentViewObj.toDateString() === new Date().toDateString();
+            const targetDateStr   = currentViewObj.toDateString();
+            const tomorrowDateStr = new Date(currentViewObj.getTime() + 86400000).toDateString();
+            const yesterdayDateStr = new Date(currentViewObj.getTime() - 86400000).toDateString();
+
+            // Determine range for monthly totals
+            const rangeStart = config.range_mode === 'range' && config.range_start
+                ? new Date(config.range_start + 'T00:00:00') : null;
+            const rangeEnd = config.range_mode === 'range' && config.range_end
+                ? new Date(config.range_end + 'T23:59:59') : null;
+
+            masterSheetData.forEach(item => {
+                if (!item.timestamp) return;
+                const entryDate = new Date(item.timestamp);
+                const dKey = entryDate.toDateString();
+
+                if (userDateMap[item.name] !== undefined) {
+                    userDateMap[item.name][dKey] = (userDateMap[item.name][dKey] || 0) + item.reps;
+                }
+
+                // Monthly / range totals
+                let inRange = false;
+                if (config.range_mode === 'range' && rangeStart && rangeEnd) {
+                    inRange = entryDate >= rangeStart && entryDate <= rangeEnd;
+                } else {
+                    inRange = entryDate.getMonth() === currentViewObj.getMonth()
+                           && entryDate.getFullYear() === currentViewObj.getFullYear();
+                }
+                if (inRange && monthlyTotals[item.name] !== undefined) {
+                    monthlyTotals[item.name] = (monthlyTotals[item.name] || 0) + item.reps;
+                }
+
+                if (dKey === targetDateStr) {
+                    const timeString = entryDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    rawChronologicalLogs.push({ name: item.name, reps: item.reps, time: timeString, ms: entryDate.getTime() });
+                }
+            });
+
+            rawChronologicalLogs.sort((a, b) => b.ms - a.ms);
+
+            ACTIVE_PLAYERS.forEach(user => {
+                const logs = userDateMap[user] || {};
+                let rawTargetDay  = Math.max(logs[targetDateStr]   || 0, 0);
+                let rawTomorrow   = Math.max(logs[tomorrowDateStr] || 0, 0);
+                let rawYesterday  = Math.max(logs[yesterdayDateStr]|| 0, 0);
+
+                let backfillReceived = 0;
+                let overflowFlame    = 0;
+                let activeLoanOutCost = 0;
+
+                if (!isViewingToday && rawTargetDay < GOAL && rawTomorrow > GOAL) {
+                    const surplus  = rawTomorrow - GOAL;
+                    const loanable = Math.floor(surplus / 2);
+                    backfillReceived = Math.min(loanable, GOAL - rawTargetDay);
+                }
+                if (rawTargetDay > GOAL && rawYesterday < GOAL) {
+                    const surplus   = rawTargetDay - GOAL;
+                    const loanable  = Math.floor(surplus / 2);
+                    const needed    = GOAL - rawYesterday;
+                    const delivered = Math.min(loanable, needed);
+                    activeLoanOutCost = delivered * 2;
+                }
+                if (rawTargetDay > GOAL) {
+                    overflowFlame = Math.max(rawTargetDay - GOAL - activeLoanOutCost, 0);
+                }
+
+                const finalCountValue = rawTargetDay > GOAL ? (GOAL + overflowFlame) : (rawTargetDay + backfillReceived);
+                const basePct     = Math.min((Math.min(rawTargetDay, GOAL) / GOAL) * 100, 100);
+                const backfillPct = Math.min(((rawTargetDay + backfillReceived) / GOAL) * 100, 100);
+                const flamePct    = Math.min((overflowFlame / GOAL) * 100, 100);
+
+                const countEl    = document.getElementById(`count-${user}`);
+                const baseEl     = document.getElementById(`bar-base-${user}`);
+                const backfillEl = document.getElementById(`bar-backfill-${user}`);
+                const flameEl    = document.getElementById(`bar-flame-${user}`);
+
+                if (countEl)    countEl.innerText = finalCountValue;
+                if (baseEl)     baseEl.style.height = `${basePct}%`;
+                if (flameEl)    flameEl.style.height = `${flamePct}%`;
+                if (backfillEl) {
+                    if (backfillReceived > 0) {
+                        backfillEl.style.height = `${backfillPct}%`;
+                        backfillEl.style.clipPath = `inset(${100 - backfillPct}% 0% ${basePct}% 0%)`;
+                    } else {
+                        backfillEl.style.height = '0%';
+                        backfillEl.style.clipPath = 'none';
+                    }
+                }
+            });
+
+            const container = document.getElementById('log-content');
+            if (rawChronologicalLogs.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#555; padding: 10px;">No records for this date.</div>';
+            } else {
+                container.innerHTML = rawChronologicalLogs.map(log => `
+                    <div class="log-item">
+                        <strong>${log.name}</strong>
+                        <span>+${log.reps} <small style="color:#555">${log.time}</small></span>
+                    </div>
+                `).join('');
+            }
+
+            // Range label for trends
+            let rangeLabel;
+            if (config.range_mode === 'range' && rangeStart && rangeEnd) {
+                const fmt = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                rangeLabel = `${fmt(rangeStart)} – ${fmt(rangeEnd)}`;
+            } else {
+                rangeLabel = currentViewObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase();
+            }
+
+            document.getElementById('trends-content').innerHTML = `
+                <div style="font-weight:700;margin-bottom:12px;color:#4cd964;border-bottom:1px solid #262626;padding-bottom:6px;font-size:12px;">${rangeLabel} VOLUME</div>
+                <div style="display:flex;flex-direction:column;gap:14px;">
+                    ${ACTIVE_PLAYERS.map(user => {
+                        const total = Math.max(monthlyTotals[user] || 0, 0);
+                        const pct   = Math.min((total / MONTHLY_BENCHMARK) * 100, 100);
+                        return `<div class="trend-row"><div class="trend-meta"><span>${user}</span><strong>${total}</strong></div><div class="trend-bar-outer"><div class="trend-bar-inner" style="width:${pct}%"></div></div></div>`;
+                    }).join('')}
+                </div>
+            `;
+
+            lastMonthlyTotals = monthlyTotals;
+            renderHallOfFame(monthlyTotals);
+            checkMonthlyKing(monthlyTotals);
+        }
+
+        function auditHistoricalBadges() {
+            const dataHash = masterSheetData.length;
+            const auditedKey = `rm_audited_v2_${dataHash}`;
+            if (localStorage.getItem(auditedKey)) return;
+
+            const userDayMap = {};
+            config.players.forEach(u => { userDayMap[u] = {}; });
+            masterSheetData.forEach(item => {
+                if (!item.timestamp || !userDayMap[item.name]) return;
+                const dKey = new Date(item.timestamp).toDateString();
+                userDayMap[item.name][dKey] = (userDayMap[item.name][dKey] || 0) + item.reps;
+            });
+
+            config.players.forEach(user => {
+                const days = userDayMap[user] || {};
+                Object.entries(days).forEach(([dayStr, total]) => {
+                    if (total >= GOAL) {
+                        const alreadyHas = (badgeStore[user] || []).some(b => b.id === 'century');
+                        if (!alreadyHas) {
+                            const ts = new Date(dayStr).getTime() || Date.now();
+                            if (!badgeStore[user]) badgeStore[user] = [];
+                            badgeStore[user].push({ id: 'century', ts });
+                        }
+                    }
+                    if (total >= GOAL * 2) {
+                        const alreadyHas = (badgeStore[user] || []).some(b => b.id === 'double');
+                        if (!alreadyHas) {
+                            const ts = new Date(dayStr).getTime() || Date.now();
+                            if (!badgeStore[user]) badgeStore[user] = [];
+                            badgeStore[user].push({ id: 'double', ts });
+                        }
+                    }
+                });
+            });
+
+            saveBadges();
+            renderBadgeStrips(lastMonthlyTotals);
+            localStorage.setItem(auditedKey, '1');
+        }
+
+        function fetchDataFromSheet() {
+            document.getElementById('load-status').innerText = "Syncing...";
+
+            const cached = localStorage.getItem('rm_cache');
+            if (cached && masterSheetData.length === 0) {
+                try {
+                    const parsed = JSON.parse(cached);
+                    // Handle both old array format and new {logs,config} format
+                    masterSheetData = Array.isArray(parsed) ? parsed : (parsed.logs || []);
+                    processAndRenderData();
+                } catch(e) {}
+            }
+
+            fetch(GOOGLE_SCRIPT_URL)
+                .then(r => r.json())
+                .then(data => {
+                    // New format: { logs: [...], config: {...} }
+                    if (data.logs) {
+                        masterSheetData = data.logs;
+                        if (data.config) applyConfig(data.config);
+                    } else {
+                        // Fallback: old array format
+                        masterSheetData = Array.isArray(data) ? data : [];
+                    }
+                    localStorage.setItem('rm_cache', JSON.stringify({ logs: masterSheetData, config: config }));
+                    processAndRenderData();
+                    auditHistoricalBadges();
+                    document.getElementById('load-status').innerText = "Online";
+                    flushQueue();
+                })
+                .catch(() => {
+                    document.getElementById('load-status').innerText = "Offline";
+                    updateOfflineBadge();
+                });
+        }
+
+        function submitLog() {
+            const user = document.getElementById('user-select').value;
+            const reps = currentCounter;
+            if (reps === 0) return;
+
+            // Capture total BEFORE adding new reps
+            const today = new Date().toDateString();
+            const prevTotal = masterSheetData
+                .filter(e => e.name === user && new Date(e.timestamp).toDateString() === today)
+                .reduce((sum, e) => sum + e.reps, 0);
+
+            const timestamp = new Date().toISOString();
+            const entry = { name: user, reps, timestamp };
+            masterSheetData.unshift(entry);
+            localStorage.setItem('rm_cache', JSON.stringify(masterSheetData));
+
+            processAndRenderData();
+
+            const newTotal = prevTotal + reps;
+            const streakEl = document.getElementById(`streak-${user}`);
+            const streakCount = streakEl ? parseInt(streakEl.innerText.replace('🔥','').trim()) || 0 : 0;
+
+            // ── Award badges ──
+            // Century — first time hitting 100 today
+            if (prevTotal < GOAL && newTotal >= GOAL) {
+                awardBadge(user, 'century');
+                // Speed demon — hit 100 before noon
+                if (new Date().getHours() < 12) awardBadge(user, 'speedDemon');
+            }
+            // Double Down — first time hitting 200 today
+            if (prevTotal < GOAL * 2 && newTotal >= GOAL * 2) {
+                awardBadge(user, 'double');
+            }
+            // Beast mode — 100+ reps in one submit
+            if (reps >= GOAL) {
+                awardBadge(user, 'beast');
+            }
+            // Streak milestone badges
+            if (streakCount > 0) {
+                const streakBadgeMap = { 7: 'streak7', 14: 'streak14', 21: 'streak21', 30: 'streak30' };
+                const badgeId = streakBadgeMap[streakCount];
+                if (badgeId) {
+                    const milestoneKey = `${user}_streak_${streakCount}`;
+                    if (!firedStreakMilestones[milestoneKey]) {
+                        firedStreakMilestones[milestoneKey] = true;
+                        awardBadge(user, badgeId);
+                    }
+                }
+            }
+
+            checkAndTriggerAnimations(user, prevTotal, newTotal, streakCount);
+
+            currentCounter = 0;
+            updateCounterDisplay();
+
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            document.getElementById('load-status').innerText = "Saving...";
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST', mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(entry)
+            }).then(() => {
+                setTimeout(() => { btn.disabled = false; fetchDataFromSheet(); }, 800);
+            }).catch(() => {
+                // Queue for later
+                submitQueue.push(entry);
+                saveQueue();
+                updateOfflineBadge();
+                btn.disabled = false;
+                document.getElementById('load-status').innerText = "Offline – Queued";
+            });
+        }
+
+        // ── ANIMATION ENGINE ──────────────────────────────────────────
+
+        function clearOverlay() {
+            document.getElementById('anim-overlay').innerHTML = '';
+        }
+
+        // Track which milestones have fired — persisted to localStorage so refresh doesn't re-trigger
+        const today = new Date().toDateString();
+        const storedAnimDate = localStorage.getItem('rm_anim_date');
+        let firedGoalToday = storedAnimDate === today
+            ? JSON.parse(localStorage.getItem('rm_anim_goal') || '{}')
+            : {};
+        let firedDoubleToday = storedAnimDate === today
+            ? JSON.parse(localStorage.getItem('rm_anim_double') || '{}')
+            : {};
+        let firedStreakMilestones = JSON.parse(localStorage.getItem('rm_anim_streaks') || '{}');
+
+        function saveAnimFlags() {
+            localStorage.setItem('rm_anim_date', new Date().toDateString());
+            localStorage.setItem('rm_anim_goal', JSON.stringify(firedGoalToday));
+            localStorage.setItem('rm_anim_double', JSON.stringify(firedDoubleToday));
+            localStorage.setItem('rm_anim_streaks', JSON.stringify(firedStreakMilestones));
+        }
+
+        // CONFETTI — fires when user first hits 100 reps today
+        function triggerConfetti() {
+            const overlay = document.getElementById('anim-overlay');
+            const colors = ['#ff3b3b','#ff9500','#ffcc00','#4cd964','#007aff','#af52de','#ff2d55','#00d2ff','#ffffff'];
+            const shapes = ['circle','rect','triangle'];
+            const count = 120;
+            const frags = [];
+            for (let i = 0; i < count; i++) {
+                const el = document.createElement('div');
+                el.className = 'confetti-piece';
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const shape = shapes[Math.floor(Math.random() * shapes.length)];
+                const size = 6 + Math.random() * 10;
+                const left = Math.random() * 100;
+                const duration = 1.8 + Math.random() * 2;
+                const delay = Math.random() * 0.6;
+                el.style.cssText = `
+                    left:${left}%; width:${size}px; height:${size}px;
+                    background:${shape !== 'triangle' ? color : 'transparent'};
+                    border-radius:${shape === 'circle' ? '50%' : shape === 'rect' ? '2px' : '0'};
+                    border-left:${shape === 'triangle' ? `${size/2}px solid transparent` : 'none'};
+                    border-right:${shape === 'triangle' ? `${size/2}px solid transparent` : 'none'};
+                    border-bottom:${shape === 'triangle' ? `${size}px solid ${color}` : 'none'};
+                    animation-duration:${duration}s; animation-delay:${delay}s;
+                `;
+                frags.push(el);
+            }
+            frags.forEach(f => overlay.appendChild(f));
+
+            // Flash
+            const flash = document.createElement('div');
+            flash.className = 'screen-flash';
+            flash.style.background = 'rgba(255,255,255,0.15)';
+            flash.style.animationDuration = '0.4s';
+            overlay.appendChild(flash);
+
+            setTimeout(clearOverlay, 3500);
+        }
+
+        // FLAME BURST — fires when submitting reps while already over goal
+        function triggerFlameBurst() {
+            const overlay = document.getElementById('anim-overlay');
+            const W = window.innerWidth, H = window.innerHeight;
+            const cx = W / 2, cy = H / 2;
+            const count = 60;
+
+            for (let i = 0; i < count; i++) {
+                const el = document.createElement('div');
+                el.className = 'flame-particle';
+                const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5) * 0.4;
+                const dist = 80 + Math.random() * 180;
+                const dist2 = dist + 60 + Math.random() * 80;
+                const size = 12 + Math.random() * 28;
+                const colors = ['#ff4500','#ff6a00','#ff9500','#ffcc00','#fff200'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const dur = 0.6 + Math.random() * 0.5;
+                const delay = Math.random() * 0.2;
+
+                const tx = Math.cos(angle) * dist, ty = Math.sin(angle) * dist;
+                const tx2 = Math.cos(angle) * dist2, ty2 = Math.sin(angle) * dist2;
+
+                el.style.cssText = `
+                    left:${cx}px; top:${cy}px;
+                    width:${size}px; height:${size * 1.4}px;
+                    background:radial-gradient(ellipse at 50% 80%, ${color}, transparent);
+                    --fx:0px; --fy:0px;
+                    --tx:${tx}px; --ty:${ty}px;
+                    --tx2:${tx2}px; --ty2:${ty2}px;
+                    animation-duration:${dur}s; animation-delay:${delay}s;
+                    transform-origin: center bottom;
+                `;
+                overlay.appendChild(el);
+            }
+
+            // Orange flash
+            const flash = document.createElement('div');
+            flash.className = 'screen-flash';
+            flash.style.background = 'rgba(255,100,0,0.25)';
+            flash.style.animationDuration = '0.5s';
+            overlay.appendChild(flash);
+
+            setTimeout(clearOverlay, 1200);
+        }
+
+        // FIREWORKS — fires when user hits 200 reps (200% goal)
+        function triggerFireworks() {
+            const overlay = document.getElementById('anim-overlay');
+            const W = window.innerWidth, H = window.innerHeight;
+            const burstCount = 8;
+            const colors = ['#ff3b3b','#ffcc00','#4cd964','#007aff','#af52de','#ff9500','#00d2ff','#ff2d55'];
+
+            for (let b = 0; b < burstCount; b++) {
+                const delay = b * 0.18;
+                const bx = W * (0.1 + Math.random() * 0.8);
+                const by = H * (0.1 + Math.random() * 0.6);
+                const color = colors[b % colors.length];
+                const sparkCount = 22;
+
+                // shell
+                const shell = document.createElement('div');
+                shell.className = 'firework-shell';
+                shell.style.cssText = `left:${bx}px; top:${H * 0.85}px; background:${color};
+                    --rise:${-(H * 0.85 - by)}px;
+                    animation-duration:0.5s; animation-delay:${delay}s;`;
+                overlay.appendChild(shell);
+
+                // sparks
+                for (let s = 0; s < sparkCount; s++) {
+                    const spark = document.createElement('div');
+                    spark.className = 'firework-spark';
+                    const angle = (Math.PI * 2 / sparkCount) * s;
+                    const dist = 60 + Math.random() * 80;
+                    spark.style.cssText = `
+                        left:${bx}px; top:${by}px; background:${color};
+                        --sx:${Math.cos(angle)*dist}px; --sy:${Math.sin(angle)*dist}px;
+                        animation-duration:${0.6 + Math.random()*0.4}s;
+                        animation-delay:${delay + 0.45}s;
+                        box-shadow: 0 0 4px ${color};
+                    `;
+                    overlay.appendChild(spark);
+                }
+            }
+
+            // Bright flash
+            const flash = document.createElement('div');
+            flash.className = 'screen-flash';
+            flash.style.background = 'rgba(255,255,255,0.3)';
+            flash.style.animationDuration = '0.3s';
+            overlay.appendChild(flash);
+
+            setTimeout(clearOverlay, 3200);
+        }
+
+        // LASER SHOW — fires on 7, 14, 21... day streaks
+        function triggerLaserShow() {
+            const overlay = document.getElementById('anim-overlay');
+            const W = window.innerWidth, H = window.innerHeight;
+            const laserColors = ['#ff2d55','#007aff','#4cd964','#af52de','#00d2ff','#ffcc00','#ff9500','#ff3b3b'];
+            const origins = [
+                {x:0, y:H}, {x:W, y:H}, {x:0, y:H*0.5}, {x:W, y:H*0.5},
+                {x:W*0.5, y:H}, {x:0, y:H*0.2}, {x:W, y:H*0.2}, {x:W*0.3, y:H}
+            ];
+            const beamCount = 16;
+
+            for (let i = 0; i < beamCount; i++) {
+                const beam = document.createElement('div');
+                beam.className = 'laser-beam';
+                const origin = origins[i % origins.length];
+                const color = laserColors[i % laserColors.length];
+                const angle = -30 + (i / beamCount) * 120;
+                const sweep = -40 + Math.random() * 80;
+                const len = W * (0.6 + Math.random() * 0.8);
+                const delay = (i * 0.08) % 0.8;
+                const dur = 1.0 + Math.random() * 0.8;
+                beam.style.cssText = `
+                    left:${origin.x}px; top:${origin.y}px;
+                    width:${len}px;
+                    background:linear-gradient(90deg, ${color}, transparent);
+                    box-shadow: 0 0 8px ${color}, 0 0 20px ${color}88;
+                    --angle:${angle}deg; --sweep:${sweep}deg;
+                    animation-duration:${dur}s; animation-delay:${delay}s;
+                `;
+                overlay.appendChild(beam);
+            }
+
+            // Pulsing core orbs
+            const orbColors = ['#ff2d55','#007aff','#4cd964','#af52de','#00d2ff'];
+            for (let o = 0; o < 5; o++) {
+                const orb = document.createElement('div');
+                orb.className = 'laser-core';
+                const size = 20 + Math.random() * 40;
+                const color = orbColors[o];
+                orb.style.cssText = `
+                    left:${W * (0.1 + o * 0.2)}px; top:${H * (0.2 + Math.random() * 0.5)}px;
+                    width:${size}px; height:${size}px;
+                    background:${color};
+                    box-shadow: 0 0 20px ${color}, 0 0 60px ${color}88;
+                    animation-duration:${1.5 + Math.random()}s; animation-delay:${o * 0.1}s;
+                `;
+                overlay.appendChild(orb);
+            }
+
+            // Also fire fireworks on top of laser show
+            setTimeout(triggerFireworks, 200);
+
+            // Rapid color flashes
+            const flashColors = ['rgba(255,45,85,0.2)','rgba(0,122,255,0.2)','rgba(76,217,100,0.2)','rgba(175,82,222,0.2)'];
+            flashColors.forEach((fc, fi) => {
+                setTimeout(() => {
+                    const flash = document.createElement('div');
+                    flash.className = 'screen-flash';
+                    flash.style.background = fc;
+                    flash.style.animationDuration = '0.3s';
+                    overlay.appendChild(flash);
+                }, fi * 200);
+            });
+
+            setTimeout(clearOverlay, 4500);
+        }
+
+        // ── ANIMATION TRIGGER CHECKER ──
+        function checkAndTriggerAnimations(user, prevTotal, newTotal, streakCount) {
+            const nowDate = new Date().toDateString();
+
+            // Reset if new day
+            if (firedGoalToday._date !== nowDate) {
+                firedGoalToday = { _date: nowDate };
+                firedDoubleToday = { _date: nowDate };
+            }
+
+            // Confetti — first time crossing 100
+            if (prevTotal < GOAL && newTotal >= GOAL && !firedGoalToday[user]) {
+                firedGoalToday[user] = true;
+                saveAnimFlags();
+                setTimeout(triggerConfetti, 300);
+            }
+
+            // Fireworks — first time crossing 200 today
+            if (prevTotal < GOAL * 2 && newTotal >= GOAL * 2 && !firedDoubleToday[user]) {
+                firedDoubleToday[user] = true;
+                saveAnimFlags();
+                setTimeout(triggerFireworks, 300);
+            }
+            // Flame burst — submitting while already above goal (but not crossing 200 this submit)
+            else if (prevTotal >= GOAL && newTotal < GOAL * 2) {
+                setTimeout(triggerFlameBurst, 200);
+            }
+
+            // Laser show — streak hits a multiple of 7
+            if (streakCount > 0 && streakCount % 7 === 0) {
+                const milestoneKey = `${user}_${streakCount}`;
+                if (!firedStreakMilestones[milestoneKey]) {
+                    firedStreakMilestones[milestoneKey] = true;
+                    saveAnimFlags();
+                    setTimeout(triggerLaserShow, 400);
+                }
+            }
+        }
+
+        // ── END ANIMATION ENGINE ──────────────────────────────────────
+
+        // Dropdown change also saves user
+        document.getElementById('user-select').addEventListener('change', function() {
+            selectUser(this.value);
+        });
+
+        // Initialize
+        renderBars();
+        populateUserSelect();
+        loadSavedUser();
+        renderBadgeStrips({});
+        updateOfflineBadge();
+        fetchDataFromSheet();
+
+        // ── SERVICE WORKER (offline app shell) ──
+        // Registers only when served over https or localhost — silently skipped
+        // when opened from disk (file://) where service workers aren't allowed.
+        if ('serviceWorker' in navigator &&
+            (location.protocol === 'https:' || location.hostname === 'localhost')) {
+            navigator.serviceWorker.register('./sw.js')
+                .then(() => console.log('Service worker registered — offline mode ready'))
+                .catch(err => console.log('Service worker registration failed:', err));
+        }
+    </script>
+</body>
+</html>
