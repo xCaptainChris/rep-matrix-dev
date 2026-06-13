@@ -155,6 +155,7 @@
             width: 100%;
             justify-content: flex-end;
             min-height: 0;
+            overflow: visible;
         }
         /* Fixed reserved height — always the same whether badges exist or not */
         .bar-below {
@@ -175,7 +176,8 @@
             background: #2d2d2d; 
             width: clamp(36px, 9vw, 56px);
             flex: 1;
-            min-height: clamp(80px, 14dvh, 140px);
+            min-height: 50px;
+            max-height: 100%;
             border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; position: relative; border: 1px solid #3a3a3a; 
         }
         
@@ -556,7 +558,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 20px 12px 20px;
+            padding: calc(env(safe-area-inset-top, 0px) + 20px) 20px 12px 20px;
             border-bottom: 1px solid #222;
             flex-shrink: 0;
         }
@@ -897,8 +899,12 @@
             <div class="settings-section" style="border-color:#ff3b3b33;">
                 <div class="settings-section-title" style="color:#ff3b3b;">Danger Zone</div>
                 <button class="settings-reset-btn" style="width:100%;" onclick="clearLocalData()">Clear Local Data</button>
-                <div style="font-size:10px; color:#555; margin-top:8px; line-height:1.4;">
+                <div style="font-size:10px; color:#555; margin:8px 0 14px 0; line-height:1.4;">
                     Wipes badges, cached logs, offline queue, and settings from this device only. Sheet data is not affected.
+                </div>
+                <button class="settings-reset-btn" style="width:100%; background:#2a1010; border-color:#ff3b3b;" onclick="resetAllReps()">⚠️ Reset All Reps to Zero</button>
+                <div style="font-size:10px; color:#555; margin-top:8px; line-height:1.4;">
+                    Permanently deletes ALL rep history from the Google Sheet for everyone. This cannot be undone.
                 </div>
             </div>
 
@@ -985,6 +991,37 @@
             if (!confirm('Are you absolutely sure? Badges earned on this device cannot be recovered (Century and Double Down will be re-detected from sheet history, but streak and other badges will be lost).')) return;
             localStorage.clear();
             location.reload();
+        }
+
+        function resetAllReps() {
+            if (!confirm('⚠️ RESET ALL REPS TO ZERO?\n\nThis permanently deletes EVERY rep entry from the Google Sheet — for all players, all dates.\n\nThis affects everyone, not just this device.')) return;
+            if (!confirm('FINAL WARNING: This cannot be undone. All history will be gone forever.\n\nType-check yourself: are you SURE you want to wipe everything?')) return;
+
+            const status = document.getElementById('settings-status');
+            status.innerText = 'Wiping sheet...';
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST', mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'clear_logs' })
+            }).then(() => {
+                // Clear local cache of logs too, and badge/anim flags tied to old data
+                masterSheetData = [];
+                localStorage.setItem('rm_cache', JSON.stringify({ logs: [], config: config }));
+                localStorage.removeItem('rm_badges_v2');
+                localStorage.removeItem('rm_anim_goal');
+                localStorage.removeItem('rm_anim_double');
+                localStorage.removeItem('rm_anim_streaks');
+                localStorage.removeItem('rm_anim_date');
+                // Clear audit flags so nothing re-awards from stale data
+                Object.keys(localStorage).forEach(k => { if (k.startsWith('rm_audited_')) localStorage.removeItem(k); });
+                badgeStore = { Anthony: [], Nick: [], Chris: [] };
+                config.players.forEach(p => { if (!badgeStore[p]) badgeStore[p] = []; });
+                status.innerText = '✓ All reps reset!';
+                setTimeout(() => { closeSettings(); location.reload(); }, 1000);
+            }).catch(() => {
+                status.innerText = 'Failed — check connection';
+            });
         }
 
         // ── OFFLINE QUEUE ──
