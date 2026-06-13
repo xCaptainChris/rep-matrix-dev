@@ -409,38 +409,19 @@
         .manual-modal-confirm:active { background: #ddd; }
 
         /* ── H2H LAUNCHER ICON ── */
+        .card-title-group { display: flex; align-items: center; gap: 10px; }
         .h2h-launcher {
             background: none;
             border: none;
-            padding: 4px;
+            padding: 2px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: transform 0.15s;
+            opacity: 0.85;
         }
-        .h2h-launcher:active { transform: scale(0.88); }
-        .h2h-bar-link {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            width: 100%;
-            margin-top: clamp(6px, 1dvh, 10px);
-            padding: clamp(7px, 1.2dvh, 10px);
-            background: #141414;
-            border: 1px solid #262626;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 800;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            color: #888;
-            transition: all 0.15s;
-        }
-        .h2h-bar-link:active { background: #1d1d1d; transform: scale(0.99); }
-        .h2h-bar-link svg { flex-shrink: 0; }
+        .h2h-launcher:active { transform: scale(0.85); opacity: 1; }
 
         /* ── H2H OVERLAY ── */
         .h2h-overlay {
@@ -996,7 +977,15 @@
     <div class="main-content">
         <div class="card">
             <div class="card-header-row">
-                <div class="card-title">GAINS</div>
+                <div class="card-title-group">
+                    <div class="card-title">GAINS</div>
+                    <button class="h2h-launcher" onclick="openH2H()" title="Head-to-Head">
+                        <svg viewBox="0 0 26 16" width="24" height="15">
+                            <polyline points="1,3 9,13 17,5 25,12" fill="none" stroke="#4cd964" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <polyline points="1,13 9,4 17,12 25,3" fill="none" stroke="#00d2ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+                        </svg>
+                    </button>
+                </div>
                 <div class="status-container">
                     <div class="loading-status" id="load-status">Syncing...</div>
                     <span class="offline-badge" id="offline-badge">QUEUED</span>
@@ -1013,14 +1002,6 @@
             <div class="chart-container" id="chart-container">
                 <!-- bars rendered dynamically by renderBars() -->
             </div>
-
-            <button class="h2h-bar-link" onclick="openH2H()">
-                <svg viewBox="0 0 26 16" width="22" height="14">
-                    <polyline points="1,3 9,13 17,5 25,12" fill="none" stroke="#4cd964" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <polyline points="1,13 9,4 17,12 25,3" fill="none" stroke="#00d2ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
-                </svg>
-                <span>Head-to-Head</span>
-            </button>
         </div>
 
         <div class="accordion" id="history-accordion">
@@ -1773,7 +1754,7 @@
         }
 
         function prevDay() {
-            const current = new Date(selectedViewISOStr);
+            const current = new Date(selectedViewISOStr + "T12:00:00");
             current.setDate(current.getDate() - 1);
             selectedViewISOStr = current.toLocaleDateString('en-CA');
             document.getElementById('main-view-date-picker').value = selectedViewISOStr;
@@ -1782,7 +1763,7 @@
         }
 
         function nextDay() {
-            const current = new Date(selectedViewISOStr);
+            const current = new Date(selectedViewISOStr + "T12:00:00");
             current.setDate(current.getDate() + 1);
             selectedViewISOStr = current.toLocaleDateString('en-CA');
             document.getElementById('main-view-date-picker').value = selectedViewISOStr;
