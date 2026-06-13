@@ -174,10 +174,12 @@
         
         .bar-outer { 
             background: #2d2d2d; 
-            width: clamp(36px, 9vw, 56px);
+            width: auto;
+            aspect-ratio: 1 / 2.8;
+            min-width: 38px;
+            max-width: 64px;
             flex: 1;
             min-height: 50px;
-            max-height: 100%;
             border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; position: relative; border: 1px solid #3a3a3a; 
         }
         
@@ -283,7 +285,127 @@
         .btn span { font-size: 9px; color: #777; font-weight: 600; margin-top: 1px; }
         .btn-neg { background: #262626; border-color: #333; }
         
-        .manual-input-box { background: #121212; border: 1px solid #333; border-radius: 6px; padding: clamp(4px, 0.6dvh, 6px); width: 100%; text-align: center; color: white; font-size: clamp(12px, 1.8dvh, 14px); margin-top: 4px; }
+        .manual-input-box { background: #121212; border: 1px solid #333; border-radius: 6px; padding: clamp(4px, 0.6dvh, 6px); width: 100%; text-align: center; color: #888; font-size: clamp(12px, 1.8dvh, 14px); margin-top: 4px; cursor: pointer; font-family: inherit; }
+        .manual-input-box:active { background: #1d1d1d; }
+
+        /* ── FOCUSED MANUAL ENTRY MODAL ── */
+        .manual-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .manual-modal-backdrop.open {
+            display: flex;
+            animation: backdropIn 0.2s ease-out forwards;
+        }
+        .manual-modal {
+            background: #1a1a1a;
+            border: 1px solid #2d2d2d;
+            border-radius: 20px;
+            padding: 24px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+        }
+        @keyframes modalPop {
+            from { transform: scale(0.85); opacity: 0; }
+            to   { transform: scale(1); opacity: 1; }
+        }
+        .manual-modal-stack {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: modalPop 0.25s cubic-bezier(0.2, 1, 0.3, 1) forwards;
+            gap: 12px;
+            width: 100%;
+            max-width: 320px;
+        }
+        .manual-modal-chips {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+        .manual-chip {
+            background: #1a1a1a;
+            border: 1px solid #2d2d2d;
+            color: #888;
+            font-size: 14px;
+            font-weight: 800;
+            padding: 12px 18px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            flex: 1;
+            min-width: 70px;
+            text-align: center;
+        }
+        .manual-chip:active { transform: scale(0.95); }
+        .manual-chip.selected {
+            border-color: #4cd964;
+            color: #4cd964;
+            box-shadow: 0 0 12px rgba(76,217,100,0.3), 0 8px 24px rgba(0,0,0,0.5);
+        }
+        .manual-modal-input {
+            width: 100%;
+            background: #0e0e0e;
+            border: 2px solid #333;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 48px;
+            font-weight: 800;
+            text-align: center;
+            padding: 12px;
+            color-scheme: dark;
+            -moz-appearance: textfield;
+        }
+        .manual-modal-input:focus {
+            outline: none;
+            border-color: #4cd964;
+        }
+        .manual-modal-input::-webkit-outer-spin-button,
+        .manual-modal-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .manual-modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .manual-modal-cancel {
+            flex: 1;
+            background: #2d2d2d;
+            border: 1px solid #3f3f3f;
+            color: #aaa;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .manual-modal-cancel:active { background: #3d3d3d; }
+        .manual-modal-confirm {
+            flex: 1.4;
+            background: #ffffff;
+            border: none;
+            color: #000;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            cursor: pointer;
+        }
+        .manual-modal-confirm:active { background: #ddd; }
         .submit-btn { 
             background: #ffffff; color: #000000; border: none; border-radius: 8px; 
             padding: clamp(9px, 1.6dvh, 14px);
@@ -824,7 +946,7 @@
             <div class="counter-display">
                 <div class="counter-number" id="counter-val">0</div>
                 <div class="counter-unit">REPS</div>
-                <input type="number" id="manual-input" class="manual-input-box" placeholder="Or type exact..." oninput="syncManualInput(this.value)">
+                <button type="button" id="manual-trigger" class="manual-input-box" onclick="openManualEntry()">Or type exact...</button>
             </div>
             
             <div class="btn-col">
@@ -909,6 +1031,19 @@
             </div>
 
             <div class="settings-status" id="settings-status"></div>
+        </div>
+    </div>
+
+    <!-- ── FOCUSED MANUAL ENTRY MODAL ── -->
+    <div class="manual-modal-backdrop" id="manual-modal-backdrop" onclick="if(event.target===this) closeManualEntry()">
+        <div class="manual-modal-stack">
+            <div class="manual-modal-chips" id="manual-modal-chips"></div>
+            <div class="manual-modal">
+                <input type="number" inputmode="numeric" pattern="[0-9]*" id="manual-modal-input" class="manual-modal-input" placeholder="0">
+                <div class="manual-modal-actions">
+                    <button class="manual-modal-confirm" onclick="pushManualEntry()">PUSH!</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1259,7 +1394,7 @@
         const BADGE_DEFS = {
             century:     { icon: '🏆', label: 'Century',      desc: 'Hit 100 reps in a day' },
             double:      { icon: '⚡', label: 'Double Down',  desc: 'Hit 200 reps in a day' },
-            beast:       { icon: '💪', label: 'Beast Mode',   desc: '100 reps in one submit' },
+            beast:       { icon: '🦾', label: 'Beast Mode',   desc: '100 reps in one submit' },
             speedDemon:  { icon: '⚡', label: 'Speed Demon',  desc: 'Hit 100 before noon' },
             streak7:     { icon: '🔥', label: 'Week Warrior', desc: '7-day streak' },
             streak14:    { icon: '📅', label: 'Fortnight',    desc: '14-day streak' },
@@ -1432,14 +1567,51 @@
             haptic();
         }
 
-        function syncManualInput(val) {
-            currentCounter = val === "" ? 0 : (parseInt(val) || 0);
+        // ── FOCUSED MANUAL ENTRY MODAL ──
+        function renderManualChips() {
+            const selected = document.getElementById('user-select').value;
+            const container = document.getElementById('manual-modal-chips');
+            container.innerHTML = ACTIVE_PLAYERS.map(p =>
+                `<button class="manual-chip ${p === selected ? 'selected' : ''}" data-chip-user="${p}">${p}</button>`
+            ).join('');
+            container.querySelectorAll('[data-chip-user]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    selectUser(btn.dataset.chipUser);
+                    renderManualChips();
+                    // Keep keyboard focus on the number field
+                    document.getElementById('manual-modal-input').focus();
+                });
+            });
+        }
+
+        function openManualEntry() {
+            renderManualChips();
+            const input = document.getElementById('manual-modal-input');
+            input.value = currentCounter > 0 ? currentCounter : '';
+            document.getElementById('manual-modal-backdrop').classList.add('open');
+            // Focus immediately within the same gesture so iOS opens the keyboard on first tap
+            input.focus();
+            input.select();
+        }
+
+        function closeManualEntry() {
+            document.getElementById('manual-modal-backdrop').classList.remove('open');
+            document.getElementById('manual-modal-input').blur();
+        }
+
+        // Sets the counter from the modal AND submits in one action
+        function pushManualEntry() {
+            const val = document.getElementById('manual-modal-input').value;
+            currentCounter = val === '' ? 0 : (parseInt(val) || 0);
             updateCounterDisplay();
+            closeManualEntry();
+            submitLog();
         }
 
         function updateCounterDisplay() {
             document.getElementById('counter-val').innerText = currentCounter;
-            document.getElementById('manual-input').value = currentCounter === 0 ? "" : currentCounter;
+            const trigger = document.getElementById('manual-trigger');
+            if (trigger) trigger.innerText = currentCounter === 0 ? 'Or type exact...' : `Tap to edit (${currentCounter})`;
         }
 
         function toggleAccordion(id) {
@@ -1772,17 +1944,24 @@
             // Badges & animations only fire for live (today) entries.
             // Backdated reps get caught by the historical audit instead.
             if (isToday) {
+                const todayStr = new Date().toDateString();
+                const earnedToday = (user, id) => (badgeStore[user] || []).some(b =>
+                    b.id === id && new Date(b.ts).toDateString() === todayStr);
+
                 // Century — first time hitting goal today
                 if (prevTotal < GOAL && newTotal >= GOAL) {
                     awardBadge(user, 'century');
-                    if (new Date().getHours() < 12) awardBadge(user, 'speedDemon');
+                    // Speed demon — hit goal before noon (once per day)
+                    if (new Date().getHours() < 12 && !earnedToday(user, 'speedDemon')) {
+                        awardBadge(user, 'speedDemon');
+                    }
                 }
                 // Double Down — first time hitting 2x goal today
                 if (prevTotal < GOAL * 2 && newTotal >= GOAL * 2) {
                     awardBadge(user, 'double');
                 }
-                // Beast mode — goal+ reps in one submit
-                if (reps >= GOAL) {
+                // Beast mode — goal+ reps in one submit (once per day)
+                if (reps >= GOAL && !earnedToday(user, 'beast')) {
                     awardBadge(user, 'beast');
                 }
                 // Streak milestone badges
@@ -2092,6 +2271,11 @@
         // Dropdown change also saves user
         document.getElementById('user-select').addEventListener('change', function() {
             selectUser(this.value);
+        });
+
+        // Enter key in manual entry submits
+        document.getElementById('manual-modal-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); pushManualEntry(); }
         });
 
         // Initialize
