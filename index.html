@@ -297,9 +297,10 @@
             -webkit-backdrop-filter: blur(8px);
             z-index: 1100;
             display: none;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
             padding: 20px;
+            padding-top: max(env(safe-area-inset-top, 0px), 60px);
         }
         .manual-modal-backdrop.open {
             display: flex;
@@ -406,6 +407,90 @@
             cursor: pointer;
         }
         .manual-modal-confirm:active { background: #ddd; }
+
+        /* ── H2H LAUNCHER ICON ── */
+        .h2h-launcher {
+            position: absolute;
+            bottom: clamp(8px, 1.4dvh, 14px);
+            left: clamp(10px, 1.8dvh, 15px);
+            background: #141414;
+            border: 1px solid #2d2d2d;
+            border-radius: 10px;
+            padding: 5px 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            z-index: 5;
+        }
+        .h2h-launcher:active { transform: scale(0.92); border-color: #4cd964; }
+
+        /* ── H2H OVERLAY ── */
+        .h2h-overlay {
+            position: fixed;
+            inset: 0;
+            background: #0e0e0e;
+            z-index: 950;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.2, 1, 0.3, 1);
+        }
+        .h2h-overlay.open { transform: translateY(0); }
+        .h2h-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .vs-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+        .vs-chip {
+            background: #2d2d2d; border: 1px solid #3f3f3f; color: #888;
+            font-size: 13px; font-weight: 800; padding: 9px 16px; border-radius: 16px;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .vs-chip:active { transform: scale(0.95); }
+        .vs-chip.sel1 { border-color: #4cd964; color: #4cd964; box-shadow: 0 0 10px rgba(76,217,100,0.25); }
+        .vs-chip.sel2 { border-color: #00d2ff; color: #00d2ff; box-shadow: 0 0 10px rgba(0,210,255,0.25); }
+        .vs-text { font-size: 12px; font-weight: 900; color: #666; }
+
+        .range-toggle { display: flex; gap: 6px; justify-content: center; margin-bottom: 18px; }
+        .range-btn {
+            background: #222; border: 1px solid #333; color: #888;
+            font-size: 11px; font-weight: 800; padding: 7px 16px; border-radius: 12px; cursor: pointer;
+        }
+        .range-btn.active { background: rgba(76,217,100,0.12); border-color: #4cd964; color: #4cd964; }
+
+        .h2h-chart-wrap { position: relative; height: 200px; margin-bottom: 10px; background: #1a1a1a; border: 1px solid #262626; border-radius: 12px; padding: 12px 8px; }
+        #h2h-chart { width: 100%; height: 100%; overflow: visible; }
+        .grid-line { stroke: #262626; stroke-width: 1; }
+        .goal-line { stroke: #ff9500; stroke-width: 1; stroke-dasharray: 4 4; opacity: 0.5; }
+        .axis-label { fill: #555; font-size: 9px; font-weight: 700; }
+        .day-label { fill: #777; font-size: 10px; font-weight: 700; }
+        .dot-p1 { fill: #4cd964; }
+        .dot-p2 { fill: #00d2ff; }
+        .line-p1 { stroke: #4cd964; stroke-width: 2.5; fill: none; filter: drop-shadow(0 0 4px rgba(76,217,100,0.5)); }
+        .line-p2 { stroke: #00d2ff; stroke-width: 2.5; fill: none; filter: drop-shadow(0 0 4px rgba(0,210,255,0.5)); }
+
+        .h2h-legend { display: flex; justify-content: center; gap: 18px; font-size: 11px; font-weight: 700; margin-bottom: 18px; }
+        .h2h-legend .legend-item { display: flex; align-items: center; gap: 6px; color: #aaa; }
+        .legend-line { width: 16px; height: 3px; border-radius: 2px; }
+
+        .h2h-scoreboard { display: flex; align-items: stretch; gap: 10px; }
+        .score-col { flex: 1; text-align: center; padding: 14px; background: #141414; border-radius: 10px; border: 1px solid #262626; }
+        .score-col.p1 { border-color: rgba(76,217,100,0.3); }
+        .score-col.p2 { border-color: rgba(0,210,255,0.3); }
+        .score-name { font-size: 12px; font-weight: 800; margin-bottom: 4px; }
+        .score-col.p1 .score-name { color: #4cd964; }
+        .score-col.p2 .score-name { color: #00d2ff; }
+        .score-total { font-size: 26px; font-weight: 900; color: #fff; }
+        .score-sub { font-size: 9px; color: #555; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+        .vs-divider { display: flex; align-items: center; font-size: 14px; font-weight: 900; color: #444; }
+
+        .h2h-verdict { text-align: center; margin-top: 14px; font-size: 14px; font-weight: 800; padding: 12px; border-radius: 10px; }
+        .h2h-verdict.win1 { background: rgba(76,217,100,0.1); color: #4cd964; border: 1px solid rgba(76,217,100,0.2); }
+        .h2h-verdict.win2 { background: rgba(0,210,255,0.1); color: #00d2ff; border: 1px solid rgba(0,210,255,0.2); }
+        .h2h-verdict.tie { background: #222; color: #999; border: 1px solid #333; }
         .submit-btn { 
             background: #ffffff; color: #000000; border: none; border-radius: 8px; 
             padding: clamp(9px, 1.6dvh, 14px);
@@ -912,6 +997,13 @@
             <div class="chart-container" id="chart-container">
                 <!-- bars rendered dynamically by renderBars() -->
             </div>
+
+            <button class="h2h-launcher" onclick="openH2H()" title="Head-to-Head">
+                <svg viewBox="0 0 24 16" width="26" height="17">
+                    <polyline points="1,12 6,5 11,9 16,2 23,7" fill="none" stroke="#4cd964" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polyline points="1,14 6,9 11,13 16,7 23,11" fill="none" stroke="#00d2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+                </svg>
+            </button>
         </div>
 
         <div class="accordion" id="history-accordion">
@@ -1039,11 +1131,37 @@
         <div class="manual-modal-stack">
             <div class="manual-modal-chips" id="manual-modal-chips"></div>
             <div class="manual-modal">
-                <input type="number" inputmode="numeric" pattern="[0-9]*" id="manual-modal-input" class="manual-modal-input" placeholder="0">
+                <input type="number" inputmode="numeric" pattern="[0-9]*" id="manual-modal-input" class="manual-modal-input" placeholder="">
                 <div class="manual-modal-actions">
                     <button class="manual-modal-confirm" onclick="pushManualEntry()">PUSH!</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- ── HEAD-TO-HEAD OVERLAY ── -->
+    <div class="h2h-overlay" id="h2h-overlay">
+        <div class="settings-header">
+            <div class="settings-title">⚔️ Head-to-Head</div>
+            <button class="settings-close" onclick="closeH2H()">✕</button>
+        </div>
+        <div class="h2h-body">
+            <div class="vs-row" id="h2h-vs-row"></div>
+
+            <div class="range-toggle" id="h2h-range-toggle">
+                <button class="range-btn active" data-range="7" onclick="setH2HRange(7)">7 Days</button>
+                <button class="range-btn" data-range="14" onclick="setH2HRange(14)">14 Days</button>
+                <button class="range-btn" data-range="30" onclick="setH2HRange(30)">30 Days</button>
+            </div>
+
+            <div class="h2h-chart-wrap">
+                <svg id="h2h-chart" viewBox="0 0 320 200" preserveAspectRatio="none"></svg>
+            </div>
+
+            <div class="h2h-legend" id="h2h-legend"></div>
+
+            <div class="h2h-scoreboard" id="h2h-scoreboard"></div>
+            <div class="h2h-verdict" id="h2h-verdict"></div>
         </div>
     </div>
 
@@ -2285,6 +2403,135 @@
         renderBadgeStrips({});
         updateOfflineBadge();
         fetchDataFromSheet();
+
+        // ── HEAD-TO-HEAD ──
+        let h2hP1 = null, h2hP2 = null, h2hRange = 7;
+
+        function openH2H() {
+            // Default to first two active players
+            if (!h2hP1 || !ACTIVE_PLAYERS.includes(h2hP1)) h2hP1 = ACTIVE_PLAYERS[0];
+            if (!h2hP2 || !ACTIVE_PLAYERS.includes(h2hP2) || h2hP2 === h2hP1) {
+                h2hP2 = ACTIVE_PLAYERS.find(p => p !== h2hP1) || ACTIVE_PLAYERS[0];
+            }
+            renderH2HChips();
+            renderH2H();
+            document.getElementById('h2h-overlay').classList.add('open');
+        }
+        function closeH2H() {
+            document.getElementById('h2h-overlay').classList.remove('open');
+        }
+        function setH2HRange(r) {
+            h2hRange = r;
+            document.querySelectorAll('#h2h-range-toggle .range-btn').forEach(b =>
+                b.classList.toggle('active', parseInt(b.dataset.range) === r));
+            renderH2H();
+        }
+        function renderH2HChips() {
+            const row = document.getElementById('h2h-vs-row');
+            // Build chips with a VS in the middle conceptually; show all active players as selectable
+            row.innerHTML = ACTIVE_PLAYERS.map(p => {
+                let cls = '';
+                if (p === h2hP1) cls = 'sel1';
+                else if (p === h2hP2) cls = 'sel2';
+                return `<button class="vs-chip ${cls}" data-h2h-player="${p}">${p}</button>`;
+            }).join('');
+            row.querySelectorAll('[data-h2h-player]').forEach(btn => {
+                btn.addEventListener('click', () => pickH2HPlayer(btn.dataset.h2hPlayer));
+            });
+        }
+        function pickH2HPlayer(name) {
+            // Tapping a player: if it's already p1 or p2, ignore; otherwise replace the "older" selection.
+            if (name === h2hP1 || name === h2hP2) return;
+            // Shift: p2 becomes p1, new pick becomes p2 (most recent two taps win)
+            h2hP1 = h2hP2;
+            h2hP2 = name;
+            renderH2HChips();
+            renderH2H();
+        }
+
+        // Build daily totals for a player over the last N days (most recent = rightmost)
+        function dailyTotals(player, days) {
+            const map = {};
+            masterSheetData.forEach(item => {
+                if (item.name !== player || !item.timestamp) return;
+                const key = new Date(item.timestamp).toDateString();
+                map[key] = (map[key] || 0) + item.reps;
+            });
+            const out = [];
+            const today = new Date();
+            for (let i = days - 1; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+                out.push(Math.max(map[d.toDateString()] || 0, 0));
+            }
+            return out;
+        }
+
+        function renderH2H() {
+            document.getElementById('h2h-legend').innerHTML = `
+                <div class="legend-item"><div class="legend-line" style="background:#4cd964"></div> ${h2hP1}</div>
+                <div class="legend-item"><div class="legend-line" style="background:#00d2ff"></div> ${h2hP2}</div>
+                <div class="legend-item"><div class="legend-line" style="background:#ff9500"></div> Goal</div>
+            `;
+
+            const d1 = dailyTotals(h2hP1, h2hRange);
+            const d2 = dailyTotals(h2hP2, h2hRange);
+            const total1 = d1.reduce((a,b)=>a+b,0);
+            const total2 = d2.reduce((a,b)=>a+b,0);
+
+            document.getElementById('h2h-scoreboard').innerHTML = `
+                <div class="score-col p1">
+                    <div class="score-name">${h2hP1}</div>
+                    <div class="score-total">${total1.toLocaleString()}</div>
+                    <div class="score-sub">${h2hRange}-day total</div>
+                </div>
+                <div class="vs-divider">vs</div>
+                <div class="score-col p2">
+                    <div class="score-name">${h2hP2}</div>
+                    <div class="score-total">${total2.toLocaleString()}</div>
+                    <div class="score-sub">${h2hRange}-day total</div>
+                </div>
+            `;
+
+            const v = document.getElementById('h2h-verdict');
+            const diff = Math.abs(total1 - total2);
+            if (total1 > total2) { v.className = 'h2h-verdict win1'; v.innerText = `🏆 ${h2hP1} leads by ${diff.toLocaleString()} reps`; }
+            else if (total2 > total1) { v.className = 'h2h-verdict win2'; v.innerText = `🏆 ${h2hP2} leads by ${diff.toLocaleString()} reps`; }
+            else { v.className = 'h2h-verdict tie'; v.innerText = `🤝 Dead even at ${total1.toLocaleString()}`; }
+
+            drawH2HChart(d1, d2);
+        }
+
+        function drawH2HChart(d1, d2) {
+            const W = 320, H = 200, padL = 28, padR = 8, padT = 12, padB = 24;
+            const plotW = W - padL - padR, plotH = H - padT - padB;
+            const maxVal = Math.max(GOAL, ...d1, ...d2, 1) * 1.1;
+            const n = d1.length;
+            const x = i => padL + (n === 1 ? plotW/2 : (i/(n-1))*plotW);
+            const y = val => padT + plotH - (val/maxVal)*plotH;
+            let svg = '';
+            const ySteps = 4;
+            for (let s = 0; s <= ySteps; s++) {
+                const val = (maxVal/ySteps)*s; const yy = y(val);
+                svg += `<line class="grid-line" x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}"/>`;
+                svg += `<text class="axis-label" x="${padL-5}" y="${yy+3}" text-anchor="end">${Math.round(val)}</text>`;
+            }
+            const gy = y(GOAL);
+            svg += `<line class="goal-line" x1="${padL}" y1="${gy}" x2="${W-padR}" y2="${gy}"/>`;
+            const labelEvery = n > 10 ? Math.ceil(n/7) : 1;
+            for (let i = 0; i < n; i++) {
+                if (i % labelEvery === 0 || i === n-1) {
+                    const lbl = i === n-1 ? 'Today' : `-${n-1-i}d`;
+                    svg += `<text class="day-label" x="${x(i)}" y="${H-8}" text-anchor="middle">${lbl}</text>`;
+                }
+            }
+            const path = data => data.map((v,i) => `${i===0?'M':'L'} ${x(i)} ${y(v)}`).join(' ');
+            svg += `<path class="line-p1" d="${path(d1)}"/>`;
+            svg += `<path class="line-p2" d="${path(d2)}"/>`;
+            d1.forEach((v,i) => { svg += `<circle class="dot-p1" cx="${x(i)}" cy="${y(v)}" r="3"/>`; });
+            d2.forEach((v,i) => { svg += `<circle class="dot-p2" cx="${x(i)}" cy="${y(v)}" r="3"/>`; });
+            document.getElementById('h2h-chart').innerHTML = svg;
+        }
 
         // ── SERVICE WORKER (offline app shell) ──
         // Registers only when served over https or localhost — silently skipped
