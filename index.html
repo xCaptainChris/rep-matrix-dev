@@ -300,7 +300,7 @@
             align-items: flex-start;
             justify-content: center;
             padding: 20px;
-            padding-top: max(env(safe-area-inset-top, 0px), 60px);
+            padding-top: calc(env(safe-area-inset-top, 0px) + 30px);
         }
         .manual-modal-backdrop.open {
             display: flex;
@@ -338,15 +338,15 @@
             background: #1a1a1a;
             border: 1px solid #2d2d2d;
             color: #888;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 800;
-            padding: 12px 18px;
-            border-radius: 16px;
+            padding: 10px 14px;
+            border-radius: 14px;
             cursor: pointer;
             transition: all 0.15s;
             box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-            flex: 1;
-            min-width: 70px;
+            flex: 0 1 auto;
+            white-space: nowrap;
             text-align: center;
         }
         .manual-chip:active { transform: scale(0.95); }
@@ -410,28 +410,44 @@
 
         /* ── H2H LAUNCHER ICON ── */
         .h2h-launcher {
-            position: absolute;
-            bottom: clamp(8px, 1.4dvh, 14px);
-            left: clamp(10px, 1.8dvh, 15px);
-            background: #141414;
-            border: 1px solid #2d2d2d;
-            border-radius: 10px;
-            padding: 5px 8px;
+            background: none;
+            border: none;
+            padding: 4px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.15s;
-            z-index: 5;
+            transition: transform 0.15s;
         }
-        .h2h-launcher:active { transform: scale(0.92); border-color: #4cd964; }
+        .h2h-launcher:active { transform: scale(0.88); }
+        .h2h-bar-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-top: clamp(6px, 1dvh, 10px);
+            padding: clamp(7px, 1.2dvh, 10px);
+            background: #141414;
+            border: 1px solid #262626;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: #888;
+            transition: all 0.15s;
+        }
+        .h2h-bar-link:active { background: #1d1d1d; transform: scale(0.99); }
+        .h2h-bar-link svg { flex-shrink: 0; }
 
         /* ── H2H OVERLAY ── */
         .h2h-overlay {
             position: fixed;
             inset: 0;
             background: #0e0e0e;
-            z-index: 950;
+            z-index: 960;
             display: flex;
             flex-direction: column;
             transform: translateY(100%);
@@ -998,11 +1014,12 @@
                 <!-- bars rendered dynamically by renderBars() -->
             </div>
 
-            <button class="h2h-launcher" onclick="openH2H()" title="Head-to-Head">
-                <svg viewBox="0 0 24 16" width="26" height="17">
-                    <polyline points="1,12 6,5 11,9 16,2 23,7" fill="none" stroke="#4cd964" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <polyline points="1,14 6,9 11,13 16,7 23,11" fill="none" stroke="#00d2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+            <button class="h2h-bar-link" onclick="openH2H()">
+                <svg viewBox="0 0 26 16" width="22" height="14">
+                    <polyline points="1,3 9,13 17,5 25,12" fill="none" stroke="#4cd964" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polyline points="1,13 9,4 17,12 25,3" fill="none" stroke="#00d2ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
                 </svg>
+                <span>Head-to-Head</span>
             </button>
         </div>
 
@@ -1141,7 +1158,7 @@
 
     <!-- ── HEAD-TO-HEAD OVERLAY ── -->
     <div class="h2h-overlay" id="h2h-overlay">
-        <div class="settings-header">
+        <div class="settings-header h2h-header">
             <div class="settings-title">⚔️ Head-to-Head</div>
             <button class="settings-close" onclick="closeH2H()">✕</button>
         </div>
@@ -1568,9 +1585,10 @@
                 }
             }
 
-            ['Anthony','Nick','Chris'].forEach(user => {
+            ACTIVE_PLAYERS.forEach(user => {
                 const strip = document.getElementById(`bar-badges-${user}`);
                 const label = document.getElementById(`bar-label-${user}`);
+                if (!strip || !label) return;
                 const badges = badgeStore[user] || [];
                 const isKing = user === kingUser;
 
@@ -1970,6 +1988,8 @@
                             badgeStore[user].push({ id: 'century', ts });
                         }
                     }
+                    // Note: audit uses raw daily totals (not backfill-adjusted) as a simple
+                    // retroactive backstop. The live submit path handles backfill precisely.
                     if (total >= GOAL * 2) {
                         const alreadyHas = (badgeStore[user] || []).some(b => b.id === 'double');
                         if (!alreadyHas) {
@@ -2056,6 +2076,25 @@
             processAndRenderData();
 
             const newTotal = prevTotal + reps;
+
+            // Effective count AFTER backfill loan-out — what actually counts toward today.
+            // Mirrors the bar math in processAndRenderData so badges match the displayed number.
+            function effectiveTodayCount(rawToday) {
+                const yStr = new Date(new Date(selectedViewISOStr + 'T12:00:00').getTime() - 86400000).toDateString();
+                const rawYesterday = Math.max(masterSheetData
+                    .filter(e => e.name === user && new Date(e.timestamp).toDateString() === yStr)
+                    .reduce((s, e) => s + e.reps, 0), 0);
+                let loanOutCost = 0;
+                if (rawToday > GOAL && rawYesterday < GOAL) {
+                    const loanable = Math.floor((rawToday - GOAL) / 2);
+                    const delivered = Math.min(loanable, GOAL - rawYesterday);
+                    loanOutCost = delivered * 2;
+                }
+                if (rawToday > GOAL) return GOAL + Math.max(rawToday - GOAL - loanOutCost, 0);
+                return rawToday;
+            }
+            const effectiveNow = effectiveTodayCount(newTotal);
+
             const streakEl = document.getElementById(`streak-${user}`);
             const streakCount = streakEl ? parseInt(streakEl.innerText.replace('🔥','').trim()) || 0 : 0;
 
@@ -2074,8 +2113,10 @@
                         awardBadge(user, 'speedDemon');
                     }
                 }
-                // Double Down — first time hitting 2x goal today
-                if (prevTotal < GOAL * 2 && newTotal >= GOAL * 2) {
+                // Double Down — first time the EFFECTIVE (post-backfill) count hits 2x goal.
+                // Reps loaned out to backfill yesterday don't count toward Double Down.
+                const prevEffective = effectiveTodayCount(prevTotal);
+                if (prevEffective < GOAL * 2 && effectiveNow >= GOAL * 2 && !earnedToday(user, 'double')) {
                     awardBadge(user, 'double');
                 }
                 // Beast mode — goal+ reps in one submit (once per day)
@@ -2095,7 +2136,7 @@
                     }
                 }
 
-                checkAndTriggerAnimations(user, prevTotal, newTotal, streakCount);
+                checkAndTriggerAnimations(user, prevEffective, effectiveNow, streakCount);
             }
 
             currentCounter = 0;
