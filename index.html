@@ -169,7 +169,7 @@
             width: 100%;
         }
         
-        .streak-badge { font-size: clamp(9px, 1.4dvh, 11px); font-weight: 800; color: #ff9500; margin-bottom: clamp(3px, 0.6dvh, 6px); background: rgba(255,149,0,0.1); padding: 2px 6px; border-radius: 8px; border: 1px solid rgba(255,149,0,0.2); }
+        .streak-badge { font-size: clamp(9px, 1.4dvh, 11px); font-weight: 800; color: #ff9500; margin-bottom: clamp(3px, 0.6dvh, 6px); background: rgba(255,149,0,0.1); padding: 2px 6px; border-radius: 8px; border: 1px solid rgba(255,149,0,0.2); flex-shrink: 0; }
         
         .bar-outer { 
             background: #2d2d2d; 
@@ -524,7 +524,7 @@
         /* ── SETTINGS COG ── */
         .settings-cog {
             position: absolute;
-            top: clamp(8px, 2dvh, 15px);
+            top: calc(env(safe-area-inset-top, 0px) + clamp(8px, 2dvh, 15px));
             right: clamp(8px, 2dvh, 15px);
             background: none;
             border: none;
@@ -534,6 +534,7 @@
             transition: opacity 0.2s, transform 0.3s;
             line-height: 1;
             padding: 4px;
+            z-index: 10;
         }
         .settings-cog:active { opacity: 1; transform: rotate(45deg); }
 
@@ -749,6 +750,11 @@
 
     <div id="anim-overlay"></div>
 
+    <!-- Hidden switch for iOS haptic feedback (Safari 17.4+ haptic tick on toggle) -->
+    <label id="haptic-trigger" style="position:fixed; left:-200px; top:0; opacity:0; pointer-events:none;">
+        <input type="checkbox" switch>
+    </label>
+
     <div class="header">
         <h1>REP MATRIX</h1>
         <div class="date-nav">
@@ -888,6 +894,14 @@
                 <button class="settings-reset-btn" onclick="resetSettings()">Reset Defaults</button>
             </div>
 
+            <div class="settings-section" style="border-color:#ff3b3b33;">
+                <div class="settings-section-title" style="color:#ff3b3b;">Danger Zone</div>
+                <button class="settings-reset-btn" style="width:100%;" onclick="clearLocalData()">Clear Local Data</button>
+                <div style="font-size:10px; color:#555; margin-top:8px; line-height:1.4;">
+                    Wipes badges, cached logs, offline queue, and settings from this device only. Sheet data is not affected.
+                </div>
+            </div>
+
             <div class="settings-status" id="settings-status"></div>
         </div>
     </div>
@@ -948,6 +962,30 @@
         let masterSheetData = [];
         let selectedViewISOStr = new Date().toLocaleDateString('en-CA');
         let lastMonthlyTotals = {};
+
+        // ── HAPTICS (Android: Vibration API / iOS: switch-toggle haptic hack) ──
+        function haptic(style) {
+            // Android & supported browsers
+            if (navigator.vibrate) {
+                if (style === 'heavy') navigator.vibrate([30, 40, 30]);
+                else navigator.vibrate(10);
+                return;
+            }
+            // iOS Safari 17.4+: toggling a native switch produces a haptic tick.
+            // Must be called from within a user gesture handler.
+            const trigger = document.getElementById('haptic-trigger');
+            if (trigger) {
+                trigger.click();
+                if (style === 'heavy') setTimeout(() => trigger.click(), 60);
+            }
+        }
+
+        function clearLocalData() {
+            if (!confirm('Clear ALL local app data on this device?\n\nThis wipes badges, cached logs, the offline submit queue, and saved settings.\n\nYour Google Sheet data is NOT affected.')) return;
+            if (!confirm('Are you absolutely sure? Badges earned on this device cannot be recovered (Century and Double Down will be re-detected from sheet history, but streak and other badges will be lost).')) return;
+            localStorage.clear();
+            location.reload();
+        }
 
         // ── OFFLINE QUEUE ──
         let submitQueue = JSON.parse(localStorage.getItem('rm_queue') || '[]');
@@ -1354,6 +1392,7 @@
         function adjustCounter(amount) {
             currentCounter += amount;
             updateCounterDisplay();
+            haptic();
         }
 
         function syncManualInput(val) {
@@ -1375,6 +1414,9 @@
             const isToday = dateObj.toDateString() === new Date().toDateString();
             document.getElementById('today-date').innerText = isToday ? `Today (${formatted}) 📅` : `${formatted} 📅`;
             document.getElementById('log-accordion-header').innerText = isToday ? "Detailed Daily Log" : `Logs for ${formatted}`;
+            // PUSH button shows the target date when logging to a past day
+            const shortDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            document.getElementById('submit-btn').innerText = isToday ? 'PUSH!' : `PUSH! → ${shortDate}`;
         }
 
         function changeViewDate(dateValue) {
@@ -1657,17 +1699,32 @@
             const user = document.getElementById('user-select').value;
             const reps = currentCounter;
             if (reps === 0) return;
+            haptic('heavy');
 
-            // Capture total BEFORE adding new reps
-            const today = new Date().toDateString();
+            const todayISO = new Date().toLocaleDateString('en-CA');
+            const isToday = selectedViewISOStr === todayISO;
+
+            // Timestamp lands on the VIEWED date — so backdated entries
+            // log to the day you're looking at, not today
+            let timestamp;
+            if (isToday) {
+                timestamp = new Date().toISOString();
+            } else {
+                const t = new Date(selectedViewISOStr + 'T12:00:00');
+                const now = new Date();
+                t.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+                timestamp = t.toISOString();
+            }
+
+            // Capture total BEFORE adding new reps — on the viewed date
+            const viewedDateStr = new Date(selectedViewISOStr + 'T12:00:00').toDateString();
             const prevTotal = masterSheetData
-                .filter(e => e.name === user && new Date(e.timestamp).toDateString() === today)
+                .filter(e => e.name === user && new Date(e.timestamp).toDateString() === viewedDateStr)
                 .reduce((sum, e) => sum + e.reps, 0);
 
-            const timestamp = new Date().toISOString();
             const entry = { name: user, reps, timestamp };
             masterSheetData.unshift(entry);
-            localStorage.setItem('rm_cache', JSON.stringify(masterSheetData));
+            localStorage.setItem('rm_cache', JSON.stringify({ logs: masterSheetData, config: config }));
 
             processAndRenderData();
 
@@ -1675,35 +1732,37 @@
             const streakEl = document.getElementById(`streak-${user}`);
             const streakCount = streakEl ? parseInt(streakEl.innerText.replace('🔥','').trim()) || 0 : 0;
 
-            // ── Award badges ──
-            // Century — first time hitting 100 today
-            if (prevTotal < GOAL && newTotal >= GOAL) {
-                awardBadge(user, 'century');
-                // Speed demon — hit 100 before noon
-                if (new Date().getHours() < 12) awardBadge(user, 'speedDemon');
-            }
-            // Double Down — first time hitting 200 today
-            if (prevTotal < GOAL * 2 && newTotal >= GOAL * 2) {
-                awardBadge(user, 'double');
-            }
-            // Beast mode — 100+ reps in one submit
-            if (reps >= GOAL) {
-                awardBadge(user, 'beast');
-            }
-            // Streak milestone badges
-            if (streakCount > 0) {
-                const streakBadgeMap = { 7: 'streak7', 14: 'streak14', 21: 'streak21', 30: 'streak30' };
-                const badgeId = streakBadgeMap[streakCount];
-                if (badgeId) {
-                    const milestoneKey = `${user}_streak_${streakCount}`;
-                    if (!firedStreakMilestones[milestoneKey]) {
-                        firedStreakMilestones[milestoneKey] = true;
-                        awardBadge(user, badgeId);
+            // Badges & animations only fire for live (today) entries.
+            // Backdated reps get caught by the historical audit instead.
+            if (isToday) {
+                // Century — first time hitting goal today
+                if (prevTotal < GOAL && newTotal >= GOAL) {
+                    awardBadge(user, 'century');
+                    if (new Date().getHours() < 12) awardBadge(user, 'speedDemon');
+                }
+                // Double Down — first time hitting 2x goal today
+                if (prevTotal < GOAL * 2 && newTotal >= GOAL * 2) {
+                    awardBadge(user, 'double');
+                }
+                // Beast mode — goal+ reps in one submit
+                if (reps >= GOAL) {
+                    awardBadge(user, 'beast');
+                }
+                // Streak milestone badges
+                if (streakCount > 0) {
+                    const streakBadgeMap = { 7: 'streak7', 14: 'streak14', 21: 'streak21', 30: 'streak30' };
+                    const badgeId = streakBadgeMap[streakCount];
+                    if (badgeId) {
+                        const milestoneKey = `${user}_streak_${streakCount}`;
+                        if (!firedStreakMilestones[milestoneKey]) {
+                            firedStreakMilestones[milestoneKey] = true;
+                            awardBadge(user, badgeId);
+                        }
                     }
                 }
-            }
 
-            checkAndTriggerAnimations(user, prevTotal, newTotal, streakCount);
+                checkAndTriggerAnimations(user, prevTotal, newTotal, streakCount);
+            }
 
             currentCounter = 0;
             updateCounterDisplay();
